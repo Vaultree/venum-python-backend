@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "venum-python-backend"
+version = "0.1.0"
+description = "A Python library for ..."
+authors = [{name = "Vaultree", email = "vaultree@vaultree.com"}]
+license = {text = "MIT"}
+dependencies = [
+  "black",
+  "flake8",
+  "pytest",
+  "sympy",
+]
+
+[tool.setuptools]
+packages = ["venum"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-v"
+testpaths = ["tests"]
