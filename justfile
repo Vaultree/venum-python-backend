@@ -7,8 +7,8 @@ container-engine := "podman"
 image-name := package-name + "-build"
 container-build-dir := "./dist_container"
 
-test:
-    {{ python }} -m pytest tests/
+test path='./':
+    {{ python }} -m pytest tests/{{path}}
 
 setup:
     @echo "Setting up virtual environment"
