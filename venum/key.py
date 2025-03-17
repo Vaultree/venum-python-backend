@@ -73,7 +73,7 @@ class PublicKey:
         - A public key.
         """
 
-        sample = secret_key.dist.sample_zero_secret(secret_key.secret_poly)
+        sample = secret_key.dist.sample_zero_encryption(secret_key.secret_poly)
         logger.debug(f"Generating public key with sample: {sample}")
         return cls(sample)
 

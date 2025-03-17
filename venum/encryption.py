@@ -48,8 +48,8 @@ class Encryptor:
     def dist(self):
         return self._dist
 
-    def encrypt(self, pk: PublicKey, message: Iterable[int],
-                plaintext_encoder=None) -> Cipher:
+    def _encrypt_pk(self, pk: PublicKey, message: Iterable[int],
+                    plaintext_encoder=None) -> Cipher:
         """
         Encrypts a message.
 
@@ -95,9 +95,39 @@ class Encryptor:
         )
         return Cipher(sample)
 
+    def _encrypt_sk(self, sk: SecretKey, message: Iterable[int],
+                    plaintext_encoder=None) -> Cipher:
+        logger.debug(f'Encrypting message: {message}')
+
+        plaintext_encoder = plaintext_encoder or self.plaintext_encoder
+
+        message = plaintext_encoder.encode(message)
+        logger.debug(f'encoded message: {message}')
+
+        crt_message = self.dist.crt_encoder.encode(
+            message,
+            self.dist.sample_noise()
+        ).set_domain(self.dist.cipher_ring)
+
+        # TODO: extract this into an easily testable function
+        zero_sample = sk.dist.sample_zero_encryption(sk.secret_poly)
+        body = zero_sample.body + crt_message
+        mask = zero_sample.mask
+        sample = GlweSample(body=body, mask=mask)
+        return Cipher(sample)
+
+    def encrypt(self, key: SecretKey | PublicKey, message: Iterable[int],
+                plaintext_encoder=None) -> Cipher:
+        if isinstance(key, SecretKey):
+            logger.debug("Secret key encryption")
+            return self._encrypt_sk(key, message, plaintext_encoder=plaintext_encoder)
+        else:
+            logger.debug("Public key encryption")
+            return self._encrypt_pk(key, message, plaintext_encoder=plaintext_encoder)
+
     def decrypt(self, sk: SecretKey, cipher: Cipher) -> Iterable[int]:
         """
-        Decrypts a ciphertext.
+        Decrypt_s a ciphertext.
 
         Args:
         - sk: A SecretKey object representing the secret key.

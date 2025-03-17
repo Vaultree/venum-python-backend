@@ -160,7 +160,7 @@ class GlweDistribution:
         logger.debug(f"CRT noise: {crt_noise}")
         return crt_noise
 
-    def sample_zero_secret(self, secret: Poly):
+    def sample_zero_encryption(self, secret: Poly):
         """
         Produces a random GLWE sample corresponding to an encryption of
         zero message.
