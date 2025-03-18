@@ -21,7 +21,7 @@ import pytest
                 ciphertext_modulus=281474972188673,
                 plaintext_modulus=12289,
                 noise_modulus=3,
-                seed=1,
+                #seed=1,
             ),
             "lhs": [0, 0, 0, 0],
             "rhs": [0, 0, 0, 0],
@@ -38,11 +38,11 @@ def test_mul(input):
     print("SK...: ", sk)
     
     for i in range(10):
-        #lhs = vetor_aleatorio(4, 1, 2)
-        #rhs = vetor_aleatorio(4, 1, 2)
+        lhs = vetor_aleatorio(4, 1, 10)
+        rhs = vetor_aleatorio(4, 1, 10)
         
-        lhs = [1,0,1,0]
-        rhs = [1,0,0,1]
+        lhs = [1,0,0,0]
+        #rhs = [1,2,3,4]
         # rhs = vetor_aleatorio(4, 1, 2)
         
         expected = (Poly(reversed(lhs), x, domain=dist.plaintext_ring) *
@@ -55,6 +55,12 @@ def test_mul(input):
         
         lhs_cipher = encryptor.encrypt(sk, lhs)
         rhs_cipher = encryptor.encrypt(sk, rhs)
+        
+        d1 = encryptor.decrypt(sk, lhs_cipher)
+        d2 = encryptor.decrypt(sk, rhs_cipher)
+        
+        assert d1 == lhs
+        assert d2 == rhs
         
         print("c1 mask: ", lhs_cipher.glwe_sample.mask)
         print("c1 body: ", lhs_cipher.glwe_sample.body)

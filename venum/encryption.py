@@ -1,3 +1,4 @@
+import sys
 from .logging import logger
 from .glwe import GlweSample, GlweDistribution
 from .key import SecretKey, PublicKey, RelinKey
@@ -103,16 +104,28 @@ class Encryptor:
 
         message = plaintext_encoder.encode(message)
         logger.debug(f'encoded message: {message}')
-
+        
+        # forcando o ruido == 0
+        ruido = plaintext_encoder.encode([0,0,0,0])
+        
         crt_message = self.dist.crt_encoder.encode(
             message,
-            self.dist.sample_noise()
+            # self.dist.sample_noise()
+            ruido
         ).set_domain(self.dist.cipher_ring)
         
-        # crt_message = message
-
+        print("message cifragem.: ", message)
+        print("message CRT......: ", message)
+        
+        if crt_message != message:
+            print("ERRO NA ENCODING =================================")
+        
         # TODO: extract this into an easily testable function
         zero_sample = sk.dist.sample_zero_encryption(sk.secret_poly)
+        
+        print("zero_sample mask: ", zero_sample.mask)
+        print("zero_sample body: ", zero_sample.body)
+        
         body = zero_sample.body + crt_message
         mask = zero_sample.mask
         sample = GlweSample(body=body, mask=mask)
@@ -147,7 +160,7 @@ class Encryptor:
         crt_message = crt_message % self.dist.poly_modulus
         logger.debug(f"{crt_message}")
         
-        print("crt_message: ", crt_message)
+        print("crt_message decifragem: ", crt_message)
         
         noisy_message = self.dist.crt_encoder.decode(crt_message)
         
@@ -155,6 +168,7 @@ class Encryptor:
         
         logger.debug(f"{noisy_message}")
 
+        # para eliminar a parte do ruído
         message_poly = Poly.from_list([rns[0] for rns in noisy_message],
                                       x, domain=self.dist.plaintext_ring)
 
@@ -219,6 +233,7 @@ class Rank2Cipher:
         
         if decomp != self.quadratic:
             print("ERRO NA DECOMPOSICAO BINÁRIA =================================")
+            sys.exit(1)
         
         mask = Poly([0], x, domain=cipher_ring)
         body = Poly([0], x, domain=cipher_ring)
@@ -231,7 +246,10 @@ class Rank2Cipher:
             
         mask += self.linear
         body += self.constant
+        
+        print("Poly modulus >>>>>>>>>>>>>>>>: ", poly_modulus)
 
         mask = mask % poly_modulus
         body = body % poly_modulus
         return Cipher(GlweSample(mask=mask, body=body))
+        # return Cipher(GlweSample(mask=body, body=mask))
