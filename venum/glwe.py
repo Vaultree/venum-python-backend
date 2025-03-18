@@ -173,6 +173,10 @@ class GlweDistribution:
         """
 
         mask = self.sample_mask()
+        # size = len(mask)
+        # for ct in range(size):
+        #     mask[ct] = 2
+        
         crt_noise = self.sample_crt_noise()
         return GlweSample._compute_zero_sample(
             mask, secret, crt_noise, self.poly_modulus)

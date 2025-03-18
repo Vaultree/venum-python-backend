@@ -108,6 +108,8 @@ class Encryptor:
             message,
             self.dist.sample_noise()
         ).set_domain(self.dist.cipher_ring)
+        
+        # crt_message = message
 
         # TODO: extract this into an easily testable function
         zero_sample = sk.dist.sample_zero_encryption(sk.secret_poly)
@@ -144,11 +146,19 @@ class Encryptor:
         crt_message = (cipher_body + cipher_mask * sk.secret_poly)
         crt_message = crt_message % self.dist.poly_modulus
         logger.debug(f"{crt_message}")
+        
+        print("crt_message: ", crt_message)
+        
         noisy_message = self.dist.crt_encoder.decode(crt_message)
+        
+        print("noise_message: ", noisy_message)
+        
         logger.debug(f"{noisy_message}")
 
         message_poly = Poly.from_list([rns[0] for rns in noisy_message],
                                       x, domain=self.dist.plaintext_ring)
+
+        print("message_poly: ", message_poly)
 
         logger.debug(f"{message_poly}")
         return self.plaintext_encoder.decode(message_poly)
@@ -190,6 +200,26 @@ class Rank2Cipher:
             num_components=relin_key.digit_count(),
             domain=cipher_ring
         )
+        
+        print("quadratico: ", self.quadratic);
+        print("Decomposicão: ");
+        decomp = Poly([0], x, domain=cipher_ring)
+        posic = 0
+        for ct in quad_decomposed:
+            print("ct: ", ct)
+            if posic == 0:
+                decomp = ct * (2 ** posic)
+            else:
+                decomp = decomp + (ct * (2 ** posic))
+                decomp = decomp % poly_modulus
+            posic += 1
+            
+        print("decomp.....: ", decomp)
+        print("quadratico.: ", self.quadratic)
+        
+        if decomp != self.quadratic:
+            print("ERRO NA DECOMPOSICAO BINÁRIA =================================")
+        
         mask = Poly([0], x, domain=cipher_ring)
         body = Poly([0], x, domain=cipher_ring)
         for aux_key, component in zip(relin_key.aux_keys,
@@ -198,8 +228,10 @@ class Rank2Cipher:
             mask = mask % poly_modulus
             body += aux_key.body * component
             body = body % poly_modulus
+            
         mask += self.linear
         body += self.constant
+
         mask = mask % poly_modulus
         body = body % poly_modulus
         return Cipher(GlweSample(mask=mask, body=body))

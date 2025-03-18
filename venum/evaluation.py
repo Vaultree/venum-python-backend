@@ -65,6 +65,13 @@ class Evaluator:
 
         linear = lhs.body * rhs.mask + lhs.mask * rhs.body
         linear = linear % self.dist.poly_modulus
+        
+        l1 = (lhs.body * rhs.mask) % self.dist.poly_modulus
+        l2 = (lhs.mask * rhs.body) % self.dist.poly_modulus
+        l3 = (l1 + l2) % self.dist.poly_modulus
+        
+        if linear != l3:
+            print("ERRO NO LINEAR")
 
         quadratic = lhs.mask * rhs.mask
         quadratic = quadratic % self.dist.poly_modulus
@@ -88,8 +95,8 @@ class Evaluator:
 
         # FIXME: either multiplication or relinearization needs
         # debugging.
-        raise NotImplementedError(
-            "Multiplication support is not yet implemented")
+        #raise NotImplementedError(
+        #    "Multiplication support is not yet implemented")
 
         logger.debug(f"Multiplying {lhs} and {rhs}")
         rank2 = self._compute_rank2_product(lhs.glwe_sample, rhs.glwe_sample)

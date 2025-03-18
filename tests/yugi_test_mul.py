@@ -17,9 +17,11 @@ import pytest
         {
             "params": EncryptionParameters(
                 dimension=4,
-                ciphertext_modulus=1400472361734830353,
+                #ciphertext_modulus=1400472361734830353,
+                ciphertext_modulus=281474972188673,
                 plaintext_modulus=12289,
                 noise_modulus=3,
+                seed=1,
             ),
             "lhs": [0, 0, 0, 0],
             "rhs": [0, 0, 0, 0],
@@ -39,8 +41,8 @@ def test_mul(input):
         #lhs = vetor_aleatorio(4, 1, 2)
         #rhs = vetor_aleatorio(4, 1, 2)
         
-        lhs = [1,0,0,0]
-        rhs = [4,3,2,1]
+        lhs = [1,0,1,0]
+        rhs = [1,0,0,1]
         # rhs = vetor_aleatorio(4, 1, 2)
         
         expected = (Poly(reversed(lhs), x, domain=dist.plaintext_ring) *
@@ -53,12 +55,19 @@ def test_mul(input):
         
         lhs_cipher = encryptor.encrypt(sk, lhs)
         rhs_cipher = encryptor.encrypt(sk, rhs)
+        
+        print("c1 mask: ", lhs_cipher.glwe_sample.mask)
+        print("c1 body: ", lhs_cipher.glwe_sample.body)
+
+        print("c2 mask: ", rhs_cipher.glwe_sample.mask)
+        print("c2 body: ", rhs_cipher.glwe_sample.body)
+
         relin_key = RelinKey.from_secret_key_bfv(sk)
         eval = Evaluator(dist, relin_key)
         cipher_result = eval.mul(lhs_cipher, rhs_cipher)
         
-        print("cipher mask: ", cipher_result.glwe_sample.mask)
-        print("cipher body: ", cipher_result.glwe_sample.body)
+        print("c3 mask: ", cipher_result.glwe_sample.mask)
+        print("c3 body: ", cipher_result.glwe_sample.body)
         
         decrypted = encryptor.decrypt(sk, cipher_result)
         assert decrypted == expected

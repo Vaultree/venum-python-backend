@@ -8,7 +8,7 @@ image-name := package-name + "-build"
 container-build-dir := "./dist_container"
 
 test path='./':
-    {{ python }} -m pytest tests/{{path}}
+    {{ python }} -s -m pytest tests/{{path}}
 
 setup:
     @echo "Setting up virtual environment"
