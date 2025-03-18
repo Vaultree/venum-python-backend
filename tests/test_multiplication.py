@@ -36,8 +36,8 @@ def test_multiplication(input):
 
     sk, pk = gen_key_pair(dist)
     encryptor = Encryptor(dist, PolynomialEncoder(dist))
-    lhs_cipher = encryptor.encrypt(pk, lhs)
-    rhs_cipher = encryptor.encrypt(pk, rhs)
+    lhs_cipher = encryptor.encrypt(sk, lhs)
+    rhs_cipher = encryptor.encrypt(sk, rhs)
     relin_key = RelinKey.from_secret_key(sk)
     eval = Evaluator(dist, relin_key)
     cipher_result = eval.mul(lhs_cipher, rhs_cipher)
