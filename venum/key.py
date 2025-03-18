@@ -1,7 +1,10 @@
 from .glwe import GlweDistribution, GlweSample
 from .logging import logger
 
-from sympy import Poly
+# from sympy import Poly
+from sympy import Poly, GF
+from sympy.abc import x
+from sympy.polys.specialpolys import random_poly
 
 import math
 from typing import Iterable, Tuple
@@ -143,11 +146,11 @@ class RelinKey:
         print("SK =", sk.secret_poly );
         print("SK2 =", sk2 );
         for i in range(digit_count):
-            mask = sk.dist.sample_mask()
+            mask = sk.dist.sample_mask() 
+            # mask = Poly(reversed([1,0,0,0]), x, domain=sk.dist.params.ciphertext_modulus)
             
-            # for ct in range(4):
-            #     mask[ct] = 10
-            
+            print("mask: AUX KEY ", mask)
+                        
             crt_noise = (sk.dist.sample_crt_noise()
                          .set_domain(sk.dist.cipher_ring))
             masked_secret = mask * sk.secret_poly
@@ -168,13 +171,17 @@ class RelinKey:
             
             # w^i * sk^2
             message = (base ** i) * sk2
+            message = message % sk.dist.poly_modulus
             
             print("message after: ", message)
-            
-            message = message % sk.dist.poly_modulus
+            print("-----------------------------------------------------")             
             body = (noisy_secret + message) % sk.dist.poly_modulus
             
-            aux_keys.append(GlweSample(mask=-mask, body=body))
+            # mask = mask * -1
+            print("mask: AUX KEY ", mask)
+            print("mask: AUX KEY (NEG)", -mask)
+            
+            aux_keys.append(GlweSample(mask=-mask , body=body))
         return aux_keys
     
     @classmethod
