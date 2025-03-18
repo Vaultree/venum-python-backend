@@ -33,9 +33,15 @@ def test_mul(input):
     sk, pk = gen_key_pair(dist)
     encryptor = Encryptor(dist, PolynomialEncoder(dist))
     
-    for i in range(1000):
-        lhs = vetor_aleatorio(4, 1, 2)
-        rhs = vetor_aleatorio(4, 1, 2)
+    print("SK...: ", sk)
+    
+    for i in range(10):
+        #lhs = vetor_aleatorio(4, 1, 2)
+        #rhs = vetor_aleatorio(4, 1, 2)
+        
+        lhs = [1,0,0,0]
+        rhs = [4,3,2,1]
+        # rhs = vetor_aleatorio(4, 1, 2)
         
         expected = (Poly(reversed(lhs), x, domain=dist.plaintext_ring) *
                 Poly(reversed(rhs), x, domain=dist.plaintext_ring) %
@@ -47,8 +53,12 @@ def test_mul(input):
         
         lhs_cipher = encryptor.encrypt(sk, lhs)
         rhs_cipher = encryptor.encrypt(sk, rhs)
-        relin_key = RelinKey.from_secret_key(sk)
+        relin_key = RelinKey.from_secret_key_bfv(sk)
         eval = Evaluator(dist, relin_key)
         cipher_result = eval.mul(lhs_cipher, rhs_cipher)
+        
+        print("cipher mask: ", cipher_result.glwe_sample.mask)
+        print("cipher body: ", cipher_result.glwe_sample.body)
+        
         decrypted = encryptor.decrypt(sk, cipher_result)
         assert decrypted == expected
