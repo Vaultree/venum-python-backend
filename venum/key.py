@@ -130,6 +130,53 @@ class RelinKey:
             aux_keys.append(GlweSample(mask=-mask, body=body))
         return aux_keys
 
+    @staticmethod
+    def _compute_aux_keys_bfv(sk: SecretKey, base: int) -> Iterable[GlweSample]:
+        digit_count = math.log(sk.dist.params.ciphertext_modulus, base)
+        digit_count = math.ceil(digit_count)
+        aux_keys = []
+        sk2 = sk.secret_poly ** 2
+        #sk2 = sk.secret_poly * sk.secret_poly
+        
+        sk2 = sk2 % sk.dist.poly_modulus
+        
+        print("SK =", sk.secret_poly );
+        print("SK2 =", sk2 );
+        for i in range(digit_count):
+            mask = sk.dist.sample_mask()
+            
+            # for ct in range(4):
+            #     mask[ct] = 10
+            
+            crt_noise = (sk.dist.sample_crt_noise()
+                         .set_domain(sk.dist.cipher_ring))
+            masked_secret = mask * sk.secret_poly
+            masked_secret = masked_secret % sk.dist.poly_modulus
+            
+            # print("noise: ", crt_noise)
+            
+            #noisy_secret = masked_secret + crt_noise
+            
+            # AS
+            noisy_secret = masked_secret
+            noisy_secret = noisy_secret % sk.dist.poly_modulus
+            
+            print("base ** i: ", base ** i)
+            print("base: ", base)
+            print("i: ", i)
+            print("sk2: ", sk2)
+            
+            # w^i * sk^2
+            message = (base ** i) * sk2
+            
+            print("message after: ", message)
+            
+            message = message % sk.dist.poly_modulus
+            body = (noisy_secret + message) % sk.dist.poly_modulus
+            
+            aux_keys.append(GlweSample(mask=-mask, body=body))
+        return aux_keys
+    
     @classmethod
     def from_secret_key(cls, secret_key: SecretKey,
                         base: int = 2) -> 'RelinKey':
@@ -145,6 +192,23 @@ class RelinKey:
         """
 
         aux_keys = cls._compute_aux_keys(secret_key, base)
+        return cls(aux_keys, base)
+
+    @classmethod
+    def from_secret_key_bfv(cls, secret_key: SecretKey,
+                        base: int = 2) -> 'RelinKey':
+        """
+        Generates a relinearization key from a secret key.
+
+        Args:
+        - secret_key: The secret key to derive the relinearization key from.
+        - base: The base to use for the relinearization key. Defaults to 2.
+
+        Returns:
+        - A relinearization key.
+        """
+
+        aux_keys = cls._compute_aux_keys_bfv(secret_key, base)
         return cls(aux_keys, base)
 
     def digit_count(self):
