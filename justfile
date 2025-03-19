@@ -11,13 +11,13 @@ test path='./':
     {{ python }} -s -m pytest tests/{{path}}
 
 setup:
-    @echo "Setting up virtual environment"
-    @{{ global-python }} -m venv {{ env }}
-    @{{ pip }} install -e .
-    @{{ pip }} install build
+    echo "Setting up virtual environment"
+    {{ global-python }} -m venv {{ env }}
+    {{ pip }} install -e .
+    {{ pip }} install build
 
 build:
-    {{ python }} -m build --wheel
+    {{ python }} -s -m build --wheel
 
 build-container:
     #!/bin/sh
@@ -36,10 +36,10 @@ clean:
     rm -rf *.egg-info
 
 format:
-    @{{ python }} -m black {{ package-name }}/ tests/
+    @{{ python }} -s -m black {{ package-name }}/ tests/
 
 lint:
-    @{{ python }} -m flake8 {{ package-name }}/ tests/
+    @{{ python }} -s -m flake8 {{ package-name }}/ tests/
 
 repl:
     @{{ python }}
