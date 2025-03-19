@@ -9,7 +9,7 @@ from sympy.abc import x
 import pytest
 
 
-@pytest.mark.skip(reason="multiplication needs fixing")
+# @pytest.mark.skip(reason="multiplication needs fixing")
 @pytest.mark.parametrize(
     "input",
     [

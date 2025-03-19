@@ -152,7 +152,7 @@ class RelinKey:
             mask = sk.dist.sample_mask() 
             # mask = Poly(reversed([1,0,0,0]), x, domain=sk.dist.params.ciphertext_modulus)
             
-            print("mask: AUX KEY ", mask)
+            #print("mask: AUX KEY ", mask)
                         
             crt_noise = (sk.dist.sample_crt_noise()
                          .set_domain(sk.dist.cipher_ring))
@@ -167,22 +167,22 @@ class RelinKey:
             noisy_secret = masked_secret
             noisy_secret = noisy_secret % sk.dist.poly_modulus
             
-            print("base ** i: ", base ** i)
-            print("base: ", base)
-            print("i: ", i)
-            print("sk2: ", sk2)
+            # print("base ** i: ", base ** i)
+            # print("base: ", base)
+            # print("i: ", i)
+            # print("sk2: ", sk2)
             
             # w^i * sk^2
             message = (base ** i) * sk2
             message = message % sk.dist.poly_modulus
             
-            print("message after: ", message)
-            print("-----------------------------------------------------")             
+            # print("message after: ", message)
+            # print("-----------------------------------------------------")             
             body = (noisy_secret + message) % sk.dist.poly_modulus
             
             # mask = mask * -1
-            print("mask: AUX KEY ", mask)
-            print("mask: AUX KEY (NEG)", -mask)
+            # print("mask: AUX KEY ", mask)
+            # print("mask: AUX KEY (NEG)", -mask)
             
             aux_keys.append(GlweSample(mask=-mask , body=body))
         return aux_keys

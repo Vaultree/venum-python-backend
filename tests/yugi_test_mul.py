@@ -1,3 +1,4 @@
+import sys
 from tests.yugi_test_enc_sk import vetor_aleatorio
 from venum.glwe import EncryptionParameters, GlweDistribution
 from venum.encryption import Encryptor
@@ -26,6 +27,7 @@ import random
             ),
             "lhs": [0, 0, 0, 0],
             "rhs": [0, 0, 0, 0],
+            # [xˆ0, x^1, x^2, x^3]
         }
     ])
 def test_mul(input):
@@ -43,22 +45,27 @@ def test_mul(input):
             
         # lhs = vetor_aleatorio(4, 1, 10)
         rhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
+        # lhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
         
         number = random.randint(1, params.plaintext_modulus-1)
-        lhs = [number,0,0,0]    
         
-        # lhs = [0,number,0,0]  
+        # lhs = [number,0,0,0]    
+        lhs = [0,number,0,0]  
         # lhs = [0,0,number,0] 
         # lhs = [0,0,0,number]        
-        # rhs = [1,2,3,4]
+        # lhs = [10,20,30,40]
         
+        # verificando... 
         expected = (Poly(reversed(lhs), x, domain=dist.plaintext_ring) *
                 Poly(reversed(rhs), x, domain=dist.plaintext_ring) %
                 dist.poly_modulus.set_domain(dist.plaintext_ring))
         expected = list(reversed(expected.all_coeffs()))
-
+        
         print("VALORES..: ", lhs, rhs)
         print("ESPERADO.: ", expected)
+        
+        generate_formula(lhs, rhs, params.plaintext_modulus)
+        #sys.exit(1)
         
         lhs_cipher = encryptor.encrypt(sk, lhs)
         rhs_cipher = encryptor.encrypt(sk, rhs)
@@ -66,6 +73,11 @@ def test_mul(input):
         d1 = encryptor.decrypt(sk, lhs_cipher)
         d2 = encryptor.decrypt(sk, rhs_cipher)
         
+        # verificando a decifragem
+        print("VALORES ENTRADA.....: ", lhs, rhs)
+        print("VALORES DECIFRADOS..: ", d1, d2)
+        print("Produto esperado....: ", expected)
+        generate_formula(lhs, rhs, params.plaintext_modulus)
         assert d1 == lhs
         assert d2 == rhs
         
@@ -83,4 +95,26 @@ def test_mul(input):
         print("c3 body: ", cipher_result.glwe_sample.body)
         
         decrypted = encryptor.decrypt(sk, cipher_result)
+        
+        generate_formula(lhs, rhs, params.plaintext_modulus)
+        print("RESULTADO: ", decrypted)
+        print("ESPERADO.: ", expected)
+
         assert decrypted == expected
+
+def generate_formula(a, b, q):
+    # String original da fórmula
+    formula = "PolynomialMod[PolynomialMod[(A*x^0 + B*x^1 + C*x^2 + D*x^3) * (E*x^0 + F*x^1 + G*x^2 + H*x^3), x^4+1], q]"
+    
+    # Substitui os coeficientes do primeiro polinômio (A, B, C, D)
+    for letter, pos in zip(["A", "B", "C", "D"], range(4)):
+        formula = formula.replace(letter, str(a[pos]))
+    
+    # Substitui os coeficientes do segundo polinômio (E, F, G, H)
+    for letter, pos in zip(["E", "F", "G", "H"], range(4)):
+        formula = formula.replace(letter, str(b[pos]))
+    
+    # Substitui o módulo 'q'
+    formula = formula.replace("q", str(q))
+    
+    print("Formula Wolfram Alpha:", formula)
