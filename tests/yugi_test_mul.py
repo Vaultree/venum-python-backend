@@ -8,6 +8,7 @@ from venum.evaluation import Evaluator
 from sympy import Poly
 from sympy.abc import x
 import pytest
+import random
 
 
 # @pytest.mark.skip(reason="multiplication needs fixing")
@@ -37,13 +38,19 @@ def test_mul(input):
     
     print("SK...: ", sk)
     
-    for i in range(10):
-        lhs = vetor_aleatorio(4, 1, 10)
-        rhs = vetor_aleatorio(4, 1, 10)
+    for i in range(100):
+        print("ITERACAO: ", i)
+            
+        # lhs = vetor_aleatorio(4, 1, 10)
+        rhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
         
-        lhs = [4,3,2,1]
-        rhs = [1,2,3,4]
-        # rhs = vetor_aleatorio(4, 1, 2)
+        number = random.randint(1, params.plaintext_modulus-1)
+        lhs = [number,0,0,0]    
+        
+        # lhs = [0,number,0,0]  
+        # lhs = [0,0,number,0] 
+        # lhs = [0,0,0,number]        
+        # rhs = [1,2,3,4]
         
         expected = (Poly(reversed(lhs), x, domain=dist.plaintext_ring) *
                 Poly(reversed(rhs), x, domain=dist.plaintext_ring) %

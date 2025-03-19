@@ -172,12 +172,12 @@ class GlweDistribution:
         - a GLWE sample corresponding to an encryption of zero.
         """
 
-        # mask = self.sample_mask()
+        #mask = self.sample_mask()
         # size = len(mask)
         # for ct in range(size):
         #     mask[ct] = 2
         
-        # crt_noise = self.sample_crt_noise()
+        #crt_noise = self.sample_crt_noise()
         
         mask = Poly(reversed([100,200,300,400]), x, domain=self.cipher_ring)
         crt_noise = Poly(reversed([0,0,0,0]), x, domain=self.cipher_ring)
