@@ -147,11 +147,19 @@ class Encryptor:
         noisy_message = self.dist.crt_encoder.decode(crt_message)
         logger.debug(f"{noisy_message}")
 
-        message_poly = Poly.from_list([rns[0] for rns in noisy_message],
-                                      x, domain=self.dist.plaintext_ring)
+        noiseless_coefs = [rns[0] for rns in noisy_message]
 
-        logger.debug(f"{message_poly}")
-        return self.plaintext_encoder.decode(message_poly)
+        # correct for dimension size
+        len_diff = self.dist.params.dimension - len(noiseless_coefs)
+        if len_diff > 0:
+            noiseless_coefs.extend([0] * len_diff)
+
+        noiseless_message = Poly.from_list(noiseless_coefs,
+                                           x, domain=self.dist.plaintext_ring)
+
+        logger.debug(f"{noiseless_message}")
+        cleartext = self.plaintext_encoder.decode(noiseless_message)
+        return cleartext
 
 
 class Rank2Cipher:
