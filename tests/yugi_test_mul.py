@@ -40,17 +40,27 @@ def test_mul(input):
     
     print("SK...: ", sk)
     
-    for i in range(100):
+    slot1 = []
+    slot2 = []
+    slot3 = []
+    slot4 = []
+    quant1 = 0
+    quant2 = 0
+    quant3 = 0
+    quant4 = 0
+    
+    total = 10000
+    for i in range(total):
         print("ITERACAO: ", i)
             
         # lhs = vetor_aleatorio(4, 1, 10)
         rhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
-        # lhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
-        
+        lhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
+         
         number = random.randint(1, params.plaintext_modulus-1)
         
-        # lhs = [number,0,0,0]    
-        lhs = [0,number,0,0]  
+        lhs = [number,0,0,0]    
+        # lhs = [number,number,number,number]  
         # lhs = [0,0,number,0] 
         # lhs = [0,0,0,number]        
         # lhs = [10,20,30,40]
@@ -99,8 +109,43 @@ def test_mul(input):
         generate_formula(lhs, rhs, params.plaintext_modulus)
         print("RESULTADO: ", decrypted)
         print("ESPERADO.: ", expected)
+        
+        t = vector_difference(decrypted, expected)
+        print("DIFERENCA: ", t)
+        
+        if t[0] > 0:
+            quant1 += 1
+        if t[1] > 0:
+            quant2 += 1
+        if t[2] > 0:            
+            quant3 += 1
+        if t[3] > 0:
+            quant4 += 1
+        
+        if t[0] not in slot1 and t[0] > 0:
+            slot1.append(t[0])
+        if t[1] not in slot2 and t[1] > 0:
+            slot2.append(t[1])
+        if t[2] not in slot3 and t[2] > 0:
+            slot3.append(t[2])
+        if t[3] not in slot4 and t[3] > 0:
+            slot4.append(t[3])
+        
+        #assert decrypted == expected
+        print("--------------------------------------------------")
+    
+    print("slot1 [Diferenças distintas verificadas]: ", slot1)
+    print("slot2 [Diferenças distintas verificadas]: ", slot2)
+    print("slot3 [Diferenças distintas verificadas]: ", slot3)
+    print("slot4 [Diferenças distintas verificadas]: ", slot4)
+    print("Quantidade de erros no slot1: ", quant1)
+    print("Quantidade de erros no slot2: ", quant2)
+    print("Quantidade de erros no slot3: ", quant3)
+    print("Quantidade de erros no slot4: ", quant4)
+    print("Total de testes: ", total)
+    print("--------------------------------------------------")
+    sys.exit(1)
 
-        assert decrypted == expected
 
 def generate_formula(a, b, q):
     # String original da fórmula
@@ -118,3 +163,27 @@ def generate_formula(a, b, q):
     formula = formula.replace("q", str(q))
     
     print("Formula Wolfram Alpha:", formula)
+
+def vector_difference(v1, v2):
+    """
+    Recebe dois vetores (listas) de números e retorna um novo vetor contendo
+    a diferença elemento a elemento: v1[i] - v2[i].
+
+    Parâmetros:
+      v1: list
+          Primeiro vetor.
+      v2: list
+          Segundo vetor, que deve ter o mesmo tamanho de v1.
+
+    Retorna:
+      list: vetor resultante da subtração de cada elemento de v1 pelo elemento correspondente em v2.
+
+    Lança:
+      ValueError se os vetores tiverem tamanhos diferentes.
+    """
+    if len(v1) != len(v2):
+        print(v1)
+        print(v2)
+        raise ValueError("Os vetores devem ter o mesmo tamanho.")
+    
+    return [a - b for a, b in zip(v1, v2)]

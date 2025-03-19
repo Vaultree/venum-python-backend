@@ -1,3 +1,4 @@
+import random
 from .glwe import GlweDistribution, GlweSample
 from .logging import logger
 
@@ -149,10 +150,13 @@ class RelinKey:
         print("modulus: ", sk.dist.poly_modulus)
         
         for i in range(digit_count):
-            mask = sk.dist.sample_mask() 
+            # mask = sk.dist.sample_mask() 
+            tmp = [random.randint(1, 281474972188673) for _ in range(4)]
+            mask = Poly(reversed(tmp), x, domain=sk.dist.cipher_ring)
+
             # mask = Poly(reversed([1,0,0,0]), x, domain=sk.dist.params.ciphertext_modulus)
             
-            #print("mask: AUX KEY ", mask)
+            print("mask: AUX KEY ", mask)
                         
             crt_noise = (sk.dist.sample_crt_noise()
                          .set_domain(sk.dist.cipher_ring))
