@@ -19,7 +19,7 @@ import pytest
                 dimension=4,
                 #ciphertext_modulus=1400472361734830353,
                 ciphertext_modulus=281474972188673,
-                plaintext_modulus=12289,
+                plaintext_modulus=65537,
                 noise_modulus=3,
                 #seed=1,
             ),
@@ -41,8 +41,8 @@ def test_mul(input):
         lhs = vetor_aleatorio(4, 1, 10)
         rhs = vetor_aleatorio(4, 1, 10)
         
-        lhs = [1,0,0,0]
-        #rhs = [1,2,3,4]
+        lhs = [4,3,2,1]
+        rhs = [1,2,3,4]
         # rhs = vetor_aleatorio(4, 1, 2)
         
         expected = (Poly(reversed(lhs), x, domain=dist.plaintext_ring) *

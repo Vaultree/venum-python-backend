@@ -4,10 +4,12 @@ from .glwe import GlweSample, GlweDistribution
 from .key import SecretKey, PublicKey, RelinKey
 from .numeric import radix_decompose_poly
 
-from sympy import Poly
+# from sympy import Poly
 from sympy.abc import x
 
 from typing import Iterable
+from sympy import Poly, GF
+
 
 
 class Cipher:
@@ -213,19 +215,33 @@ class Rank2Cipher:
         """
 
         cipher_ring = poly_modulus.domain
-        quad_decomposed = radix_decompose_poly(
-            poly=self.quadratic,
-            radix=relin_key.base,
-            num_components=relin_key.digit_count(),
-            domain=cipher_ring
-        )
+        # quad_decomposed = radix_decompose_poly(
+        #     poly=self.quadratic,
+        #     radix=relin_key.base,
+        #     num_components=relin_key.digit_count(),
+        #     domain=cipher_ring
+        # )
+        
+        print("radix: ", relin_key.base);
+        print("digit_count: ", relin_key.digit_count());
+        print("Domain: ", cipher_ring);
+        
+        # decomposicao binaria
+        quad_decomposed = decompose_poly(self.quadratic, relin_key.base, relin_key.digit_count(), cipher_ring);
+        
+        # print("passou aqui");
         
         print("quadratico: ", self.quadratic);
-        print("Decomposicão: ");
+        print("Decomposicão: ", sum(1 for _ in quad_decomposed));
+        
+        if sum(1 for _ in quad_decomposed) != relin_key.digit_count():
+            print("ERRO NA DECOMPOSICAO BINÁRIA (numero de elementos diferentes )=================================")
+            sys.exit(1)
+        
         decomp = Poly([0], x, domain=cipher_ring)
         posic = 0
         for ct in quad_decomposed:
-            print("ct: ", ct)
+            # print("ct: ", ct)
             if posic == 0:
                 decomp = ct * (2 ** posic)
             else:
@@ -258,3 +274,59 @@ class Rank2Cipher:
         body = body % poly_modulus
         return Cipher(GlweSample(mask=mask, body=body))
         # return Cipher(GlweSample(mask=body, body=mask))
+
+
+def decompose_poly(poly: Poly, base: int, num_components: int, modulo: int):
+    """
+    Decompõe um polinômio em uma soma de polinômios cujos coeficientes 
+    correspondem aos dígitos da representação dos coeficientes do polinômio
+    original na base 'base', trabalhando em GF(modulo).
+
+    Parâmetros:
+      poly          : Poly
+                      Polinômio de entrada (univariado)
+      base          : int
+                      Base usada para decomposição (ex: 2 para binário)
+      num_components: int
+                      Número de componentes (dígitos a serem extraídos)
+      modulo        : int
+                      Módulo usado para reduzir os coeficientes (ex: 281474972188673)
+
+    Retorna:
+      Uma lista (Iterable) de objetos Poly, onde o j-ésimo polinômio corresponde
+      à parte dos coeficientes associada a base^j.
+    """
+    
+    # Recria o polinômio no domínio do corpo finito GF(modulo)
+    #poly_mod = Poly(poly.as_expr(), poly.gens, domain=GF(modulo))
+    
+    poly_mod = poly
+    
+    # Obtém um dicionário dos termos: chaves são tuplas de expoentes; valores são os coeficientes
+    coeff_dict = poly_mod.as_dict()
+    
+    # Inicializa um dicionário para cada componente (cada "casa" na base)
+    comp_coeffs = {j: {} for j in range(num_components)}
+        
+    # Para cada termo do polinômio, decompor o coeficiente na base fornecida
+    for monom, coeff in coeff_dict.items():
+        # Para polinômios univariados, o monômio é representado como uma tupla (expoente,)
+        exp = monom[0]
+        a = coeff  # coeficiente já em GF(modulo)
+        # Extração dos dígitos
+        for j in range(num_components):
+            digit = a % base
+            a = a // base
+            # Armazena o dígito no dicionário do componente j para o monômio com expoente 'exp'
+            comp_coeffs[j][(exp,)] = digit
+        # Se ainda sobrar valor, significa que a decomposição exige mais dígitos do que 'num_components'
+        if a != 0:
+            raise ValueError(f"O coeficiente do termo x^{exp} exige mais de {num_components} dígitos na base {base}.")
+    
+    # Constrói os polinômios correspondentes a cada componente, mantendo o mesmo conjunto de variáveis
+    polys = []
+    for j in range(num_components):
+        p = Poly.from_dict(comp_coeffs[j], poly.gens, domain=modulo)
+        polys.append(p)
+    
+    return polys
