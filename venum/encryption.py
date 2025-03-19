@@ -164,6 +164,23 @@ class Encryptor:
         
         print("crt_message decifragem: ", crt_message)
         
+        from sympy import symbols
+        x = symbols('x')
+        # Exemplo: polinômio com 4 coeficientes: coeficiente de x^0, x^1, x^2 e x^3.
+        # poly = Poly(1 + 2*x + 3*x**2 + 4*x**3, x, modulus=281474972188673)
+        
+        print("poly: ", crt_message)
+        vetor_coeficientes = poly_to_vector(crt_message)
+        print("vetor_coeficientes [1]: ", vetor_coeficientes)
+        
+        for i in range(len(vetor_coeficientes)):
+            vetor_coeficientes[i] = vetor_coeficientes[i] % 65537
+            
+        print("vetor_coeficientes [2]: ", vetor_coeficientes)
+        
+        print("=======================================================")    
+        return vetor_coeficientes
+        
         noisy_message = self.dist.crt_encoder.decode(crt_message)
         
         print("noise_message: ", noisy_message)
@@ -175,6 +192,7 @@ class Encryptor:
                                       x, domain=self.dist.plaintext_ring)
 
         print("message_poly: ", message_poly)
+        print("=======================================================")
 
         logger.debug(f"{message_poly}")
         return self.plaintext_encoder.decode(message_poly)
@@ -329,3 +347,37 @@ def decompose_poly(poly: Poly, base: int, num_components: int, modulo: int):
         polys.append(p)
     
     return polys
+
+def poly_to_vector(poly: Poly) -> list:
+    """
+    Converte um objeto Poly univariado em um vetor de coeficientes.
+    O vetor resultante tem, na posição i, o coeficiente de x^i.
+    
+    Parâmetros:
+      poly : Poly
+             Polinômio univariado (pode conter um domínio modular)
+    
+    Retorna:
+      list : vetor de coeficientes em ordem crescente de expoentes.
+    
+    Exemplo:
+      Se poly = Poly(1 + 2*x + 3*x**2 + 4*x**3, x, modulus=281474972188673),
+      a função retorna [1, 2, 3, 4].
+    """
+    # Verifica se o polinômio é univariado
+    if len(poly.gens) != 1:
+        raise ValueError("A função suporta apenas polinômios univariados.")
+    
+    # Obtém o grau do polinômio e inicializa o vetor com zeros
+    degree = 3
+    vec = [0] * (degree + 1)
+    
+    # poly.as_dict() retorna um dicionário onde as chaves são tuplas de expoentes
+    for (exp,), coeff in poly.as_dict().items():
+        vec[exp] = coeff
+
+    # while not len(vec) == 4:
+    #     vec.push(0)
+
+    print(vec)    
+    return vec
