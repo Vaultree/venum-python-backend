@@ -145,6 +145,9 @@ class RelinKey:
         
         print("SK =", sk.secret_poly );
         print("SK2 =", sk2 );
+        
+        print("modulus: ", sk.dist.poly_modulus)
+        
         for i in range(digit_count):
             mask = sk.dist.sample_mask() 
             # mask = Poly(reversed([1,0,0,0]), x, domain=sk.dist.params.ciphertext_modulus)
