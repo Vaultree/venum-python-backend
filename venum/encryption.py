@@ -210,33 +210,37 @@ class Rank2Cipher:
         """
 
         cipher_ring = poly_modulus.domain
-        # quad_decomposed = radix_decompose_poly(
-        #     poly=self.quadratic,
-        #     radix=relin_key.base,
-        #     num_components=relin_key.digit_count(),
-        #     domain=cipher_ring
-        # )
+        quad_decomposed = radix_decompose_poly(
+            poly=self.quadratic,
+            radix=relin_key.base,
+            num_components=relin_key.digit_count(),
+            domain=cipher_ring
+        )
         
         print("radix: ", relin_key.base);
         print("digit_count: ", relin_key.digit_count());
         print("Domain: ", cipher_ring);
         
         # decomposicao binaria
-        quad_decomposed = decompose_poly(self.quadratic, relin_key.base, relin_key.digit_count(), cipher_ring);
+        # quad_decomposed = decompose_poly(self.quadratic, relin_key.base, relin_key.digit_count(), cipher_ring);
         
         # print("passou aqui");
         
         print("quadratico: ", self.quadratic);
+        quad_decomposed = [x for x in quad_decomposed];
         print("Decomposicão: ", sum(1 for _ in quad_decomposed));
+        # sys.exit(1)
         
-        if sum(1 for _ in quad_decomposed) != relin_key.digit_count():
-            print("ERRO NA DECOMPOSICAO BINÁRIA (numero de elementos diferentes )=================================")
-            sys.exit(1)
+        # if sum(1 for _ in quad_decomposed) != relin_key.digit_count():
+        #     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        #     print(len(quad_decomposed), relin_key.digit_count())
+        #     print("ERRO NA DECOMPOSICAO BINÁRIA (numero de elementos diferentes )=================================")
+        #     sys.exit(1)
         
         decomp = Poly([0], x, domain=cipher_ring)
         posic = 0
         for ct in quad_decomposed:
-            # print("ct: ", ct)
+            #print("ct: ", ct)
             if posic == 0:
                 decomp = ct * (2 ** posic)
             else:

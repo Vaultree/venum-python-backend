@@ -52,6 +52,7 @@ def radix_decompose_poly(poly: Poly, radix: int,
 
     for n in range(num_components):
         coeffs = (nth_digit(coef, radix, n)
-                  for coef in reversed(poly.all_coeffs()))
+            for coef in poly.all_coeffs())
+            # for coef in reversed(poly.all_coeffs()))
         decomposed = Poly(coeffs, x, domain=domain)
         yield decomposed
