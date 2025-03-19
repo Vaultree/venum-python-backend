@@ -164,22 +164,22 @@ class Encryptor:
         
         print("crt_message decifragem: ", crt_message)
         
-        from sympy import symbols
-        x = symbols('x')
-        # Exemplo: polinômio com 4 coeficientes: coeficiente de x^0, x^1, x^2 e x^3.
-        # poly = Poly(1 + 2*x + 3*x**2 + 4*x**3, x, modulus=281474972188673)
+        # from sympy import symbols
+        # x = symbols('x')
+        # # Exemplo: polinômio com 4 coeficientes: coeficiente de x^0, x^1, x^2 e x^3.
+        # # poly = Poly(1 + 2*x + 3*x**2 + 4*x**3, x, modulus=281474972188673)
         
-        print("poly: ", crt_message)
-        vetor_coeficientes = poly_to_vector(crt_message)
-        print("vetor_coeficientes [1]: ", vetor_coeficientes)
+        # print("poly: ", crt_message)
+        # vetor_coeficientes = poly_to_vector(crt_message)
+        # print("vetor_coeficientes [1]: ", vetor_coeficientes)
         
-        for i in range(len(vetor_coeficientes)):
-            vetor_coeficientes[i] = vetor_coeficientes[i] % 65537
+        # for i in range(len(vetor_coeficientes)):
+        #     vetor_coeficientes[i] = vetor_coeficientes[i] % 65537
             
-        print("vetor_coeficientes [2]: ", vetor_coeficientes)
+        # print("vetor_coeficientes [2]: ", vetor_coeficientes)
         
-        print("=======================================================")    
-        return vetor_coeficientes
+        # print("=======================================================")    
+        # return vetor_coeficientes
         
         noisy_message = self.dist.crt_encoder.decode(crt_message)
         
