@@ -19,8 +19,8 @@ import random
         {
             "params": EncryptionParameters(
                 dimension=4,
-                # ciphertext_modulus=1400472361734830353,
-                ciphertext_modulus=281474972188673,
+                ciphertext_modulus=1400472361734830353,
+                # ciphertext_modulus=281474972188673,
                 plaintext_modulus=65537,
                 noise_modulus=3,
                 #seed=1,
@@ -120,22 +120,26 @@ def test_mul(input):
         t = vector_difference(decrypted, expected)
         print("DIFERENCA: ", t)
         
-        if t[0] > 0:
+        if t[0] != 0:
             quant1 += 1
-        if t[1] > 0:
+        if t[1] != 0:
             quant2 += 1
-        if t[2] > 0:            
+        if t[2] != 0:            
             quant3 += 1
-        if t[3] > 0:
+        if t[3] != 0:
             quant4 += 1
+            
+        for i in range(4):
+            if t[i] < 0:
+                t[i] += params.plaintext_modulus
         
-        if t[0] not in slot1 and t[0] > 0:
+        if t[0] not in slot1 and t[0] != 0:
             slot1.append(t[0])
-        if t[1] not in slot2 and t[1] > 0:
+        if t[1] not in slot2 and t[1] != 0:
             slot2.append(t[1])
-        if t[2] not in slot3 and t[2] > 0:
+        if t[2] not in slot3 and t[2] != 0:
             slot3.append(t[2])
-        if t[3] not in slot4 and t[3] > 0:
+        if t[3] not in slot4 and t[3] != 0:
             slot4.append(t[3])
         
             #sys.exit(1)
