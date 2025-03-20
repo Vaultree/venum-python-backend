@@ -47,6 +47,15 @@ import pytest
             ),
             "message": [1, 2, 3, 4]
         },
+        {
+            "params": EncryptionParameters(
+                dimension=4,
+                ciphertext_modulus=12289,
+                plaintext_modulus=127,
+                noise_modulus=3,
+            ),
+            "message": [0, 0, 4, 0]
+        },
     ])
 def test_encrypt_decrypt(input):
     params, message = input["params"], input["message"]

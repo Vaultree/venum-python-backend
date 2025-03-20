@@ -49,7 +49,7 @@ def test_mul(input):
     quant2 = 0
     quant3 = 0
     quant4 = 0
-    total = 10000
+    total = 1000
     quantidade_decifragens_corretas = 0
     
     for i in range(total):
@@ -59,8 +59,8 @@ def test_mul(input):
         rhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
         lhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
 
-        rhs = vetor_aleatorio(4, 1, 64)
-        lhs = vetor_aleatorio(4, 1, 64)
+        #rhs = vetor_aleatorio(4, 1, 64)
+        #lhs = vetor_aleatorio(4, 1, 64)
          
         number = random.randint(1, params.plaintext_modulus-1)
         

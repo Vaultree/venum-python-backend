@@ -162,7 +162,33 @@ class Encryptor:
         crt_message = crt_message % self.dist.poly_modulus
         logger.debug(f"{crt_message}")
         
+        print("=" * 80)
+        print("PROCESSO DE DECIGRAGEM")
         print("crt_message decifragem: ", crt_message)
+        
+        # correção do processo de decifragem:
+        
+        size = len(crt_message.all_coeffs())    # dimensao
+        print("size: ", size)
+        coeficientes_dec = crt_message.all_coeffs() 
+        coeficientes_cresc = coeficientes_dec[::-1] # invertendo a ordem dos coeficientes
+        print("coeficientes_cresc: ", coeficientes_cresc)
+        
+        ret = []
+        limit = self.dist.params.ciphertext_modulus / 2
+        print("limit: ", limit)
+        for ct in coeficientes_cresc:
+            tmp = ct
+            print("tmp: ", tmp)
+            if tmp > limit:
+                tmp -= self.dist.params.ciphertext_modulus
+            
+            if tmp < 0:
+                tmp += self.dist.params.plaintext_modulus    
+            ret.append(tmp % self.dist.params.plaintext_modulus)
+        
+        print("ret: ", ret) # aqui temos o cleartext
+        return ret
         
         # from sympy import symbols
         # x = symbols('x')
@@ -277,6 +303,12 @@ class Rank2Cipher:
         if decomp != self.quadratic:
             print("ERRO NA DECOMPOSICAO BINÁRIA =================================")
             sys.exit(1)
+            
+        if decomp == self.quadratic:
+            print("DECOMPOSICAO BINÁRIA OK !!!!!!!!!!!!!")    
+            
+        print("=" * 80)
+        print("PROCESSO DE RELINEARIZAÇÃO")    
         
         mask = Poly([0], x, domain=cipher_ring)
         body = Poly([0], x, domain=cipher_ring)
@@ -294,6 +326,10 @@ class Rank2Cipher:
 
         mask = mask % poly_modulus
         body = body % poly_modulus
+        
+        print("mask - final: ", mask)
+        print("body - final: ", body)
+        
         return Cipher(GlweSample(mask=mask, body=body))
         # return Cipher(GlweSample(mask=body, body=mask))
 

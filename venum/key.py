@@ -144,6 +144,9 @@ class RelinKey:
         
         sk2 = sk2 % sk.dist.poly_modulus
         
+        print("=" * 80)
+        print("GERANDO A CHAVE DE RELINEARIZAÇÃO")
+        
         print("SK =", sk.secret_poly );
         print("SK2 =", sk2 );
         
@@ -156,7 +159,7 @@ class RelinKey:
 
             # mask = Poly(reversed([1,0,0,0]), x, domain=sk.dist.params.ciphertext_modulus)
             
-            print("mask: AUX KEY ", mask)
+            # print("mask: AUX KEY ", mask)
                         
             crt_noise = (sk.dist.sample_crt_noise()
                          .set_domain(sk.dist.cipher_ring))
@@ -166,6 +169,12 @@ class RelinKey:
             # print("noise: ", crt_noise)
             
             #noisy_secret = masked_secret + crt_noise
+            
+            # ruido simples para chave de relinearização:
+            # ruido = [random.randint(0, 1) for _ in range(4)]
+            # ruido = Poly(reversed(ruido), x, domain=sk.dist.cipher_ring)
+            # print("ruido da chave de relinearização: ", ruido)
+            # noisy_secret = masked_secret + ruido
             
             # AS
             noisy_secret = masked_secret
@@ -187,6 +196,11 @@ class RelinKey:
             # mask = mask * -1
             # print("mask: AUX KEY ", mask)
             # print("mask: AUX KEY (NEG)", -mask)
+            
+            print("i = ", i)
+            print("mask: AUX KEY ", mask)
+            print("body: AUX KEY ", body)
+            print("-----------------------------------------------------")
             
             aux_keys.append(GlweSample(mask=-mask , body=body))
         return aux_keys
