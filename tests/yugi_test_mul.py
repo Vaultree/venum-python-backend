@@ -19,9 +19,10 @@ import random
         {
             "params": EncryptionParameters(
                 dimension=4,
-                ciphertext_modulus=1400472361734830353,
-                # ciphertext_modulus=281474972188673,
+                # ciphertext_modulus=1400472361734830353,
+                ciphertext_modulus=281474972188673,
                 plaintext_modulus=65537,
+                # plaintext_modulus=12289,
                 noise_modulus=3,
                 #seed=1,
             ),
@@ -48,7 +49,7 @@ def test_mul(input):
     quant2 = 0
     quant3 = 0
     quant4 = 0
-    total = 100
+    total = 10000
     quantidade_decifragens_corretas = 0
     
     for i in range(total):
@@ -130,7 +131,7 @@ def test_mul(input):
             quant4 += 1
             
         for i in range(4):
-            if t[i] < 0:
+            while t[i] < 0:
                 t[i] += params.plaintext_modulus
         
         if t[0] not in slot1 and t[0] != 0:
