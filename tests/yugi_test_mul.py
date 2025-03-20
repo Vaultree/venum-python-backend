@@ -19,7 +19,7 @@ import random
         {
             "params": EncryptionParameters(
                 dimension=4,
-                #ciphertext_modulus=1400472361734830353,
+                # ciphertext_modulus=1400472361734830353,
                 ciphertext_modulus=281474972188673,
                 plaintext_modulus=65537,
                 noise_modulus=3,
@@ -48,18 +48,22 @@ def test_mul(input):
     quant2 = 0
     quant3 = 0
     quant4 = 0
+    total = 100
+    quantidade_decifragens_corretas = 0
     
-    total = 10000
     for i in range(total):
-        print("ITERACAO: ", i)
+        # print("ITERACAO: ", i)
             
         # lhs = vetor_aleatorio(4, 1, 10)
         rhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
         lhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
+
+        rhs = vetor_aleatorio(4, 1, 64)
+        lhs = vetor_aleatorio(4, 1, 64)
          
         number = random.randint(1, params.plaintext_modulus-1)
         
-        lhs = [number,0,0,0]    
+        # lhs = [number,0,0,0]    
         # lhs = [number,number,number,number]  
         # lhs = [0,0,number,0] 
         # lhs = [0,0,0,number]        
@@ -131,6 +135,10 @@ def test_mul(input):
         if t[3] not in slot4 and t[3] > 0:
             slot4.append(t[3])
         
+        if decrypted == expected:
+            quantidade_decifragens_corretas += 1
+            #sys.exit(1)
+            
         #assert decrypted == expected
         print("--------------------------------------------------")
     
@@ -143,6 +151,8 @@ def test_mul(input):
     print("Quantidade de erros no slot3: ", quant3)
     print("Quantidade de erros no slot4: ", quant4)
     print("Total de testes: ", total)
+    print("Quantidade de decifragens corretas: ", quantidade_decifragens_corretas
+          , " de ", total)
     print("--------------------------------------------------")
     sys.exit(1)
 

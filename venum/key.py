@@ -151,7 +151,7 @@ class RelinKey:
         
         for i in range(digit_count):
             # mask = sk.dist.sample_mask() 
-            tmp = [random.randint(1, 281474972188673) for _ in range(4)]
+            tmp = [random.randint(1, sk.dist.params.ciphertext_modulus) for _ in range(4)]
             mask = Poly(reversed(tmp), x, domain=sk.dist.cipher_ring)
 
             # mask = Poly(reversed([1,0,0,0]), x, domain=sk.dist.params.ciphertext_modulus)
