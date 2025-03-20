@@ -114,6 +114,9 @@ def test_mul(input):
         print("RESULTADO: ", decrypted)
         print("ESPERADO.: ", expected)
         
+        if decrypted == expected:
+            quantidade_decifragens_corretas += 1
+        
         t = vector_difference(decrypted, expected)
         print("DIFERENCA: ", t)
         
@@ -135,8 +138,6 @@ def test_mul(input):
         if t[3] not in slot4 and t[3] > 0:
             slot4.append(t[3])
         
-        if decrypted == expected:
-            quantidade_decifragens_corretas += 1
             #sys.exit(1)
             
         #assert decrypted == expected
