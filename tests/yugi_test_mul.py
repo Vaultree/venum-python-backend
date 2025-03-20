@@ -18,7 +18,7 @@ import random
     [
         {
             "params": EncryptionParameters(
-                dimension=4,
+                dimension=4096,
                 # ciphertext_modulus=1400472361734830353,
                 ciphertext_modulus=281474972188673,
                 plaintext_modulus=65537,
@@ -33,6 +33,12 @@ import random
     ])
 def test_mul(input):
     params, lhs, rhs = input["params"], input["lhs"], input["rhs"]
+    
+    # envenenando os parametros
+    params.dimension = 64
+    params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
+    params.plaintext_modulus = 65537
+    total = 100     # TOTAL DE TESTES
 
     dist = GlweDistribution(params)
 
@@ -48,14 +54,15 @@ def test_mul(input):
     quant1 = 0
     quant2 = 0
     quant3 = 0
-    quant4 = 0
-    total = 100
+    quant4 = 0 
     quantidade_decifragens_corretas = 0
+    
+    slots = [0] * params.dimension
+    quant = [0] * params.dimension
     
     for i in range(total):
         # print("ITERACAO: ", i)
             
-        # lhs = vetor_aleatorio(4, 1, 10)
         rhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)
         lhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)
 
@@ -121,49 +128,82 @@ def test_mul(input):
         if decrypted != expected:
             sys.exit(1)
 
-        
+        # verificando diferenças
         t = vector_difference(decrypted, expected)
-        print("DIFERENCA: ", t)
+        if t != [0] * params.dimension:
+            print("DIFERENCA: ", t)
+        else:
+            print("Nenhuma diferença encontrada.")  
         
-        if t[0] != 0:
-            quant1 += 1
-        if t[1] != 0:
-            quant2 += 1
-        if t[2] != 0:            
-            quant3 += 1
-        if t[3] != 0:
-            quant4 += 1
+        if params.dimension == 4:
+            if t[0] != 0:
+                quant1 += 1
+            if t[1] != 0:
+                quant2 += 1
+            if t[2] != 0:            
+                quant3 += 1
+            if t[3] != 0:
+                quant4 += 1
+                
+            for i in range(4):
+                while t[i] < 0:
+                    t[i] += params.plaintext_modulus
             
-        for i in range(4):
-            while t[i] < 0:
-                t[i] += params.plaintext_modulus
-        
-        if t[0] not in slot1 and t[0] != 0:
-            slot1.append(t[0])
-        if t[1] not in slot2 and t[1] != 0:
-            slot2.append(t[1])
-        if t[2] not in slot3 and t[2] != 0:
-            slot3.append(t[2])
-        if t[3] not in slot4 and t[3] != 0:
-            slot4.append(t[3])
-        
+            if t[0] not in slot1 and t[0] != 0:
+                slot1.append(t[0])
+            if t[1] not in slot2 and t[1] != 0:
+                slot2.append(t[1])
+            if t[2] not in slot3 and t[2] != 0:
+                slot3.append(t[2])
+            if t[3] not in slot4 and t[3] != 0:
+                slot4.append(t[3])
+        else:
+            limit = params.dimension
+            for i in range(limit):
+                if t[i] != 0:
+                    quant[i] += 1
+                    
+                for i in range(limit):
+                    while t[i] < 0:
+                        t[i] += params.plaintext_modulus
+                        
+                if t[i] not in slots and t[i] != 0:
+                    slots.append(t[i])
             #sys.exit(1)
             
         #assert decrypted == expected
         print("--------------------------------------------------")
     
-    print("slot1 [Diferenças distintas verificadas]: ", slot1)
-    print("slot2 [Diferenças distintas verificadas]: ", slot2)
-    print("slot3 [Diferenças distintas verificadas]: ", slot3)
-    print("slot4 [Diferenças distintas verificadas]: ", slot4)
-    print("Quantidade de erros no slot1: ", quant1)
-    print("Quantidade de erros no slot2: ", quant2)
-    print("Quantidade de erros no slot3: ", quant3)
-    print("Quantidade de erros no slot4: ", quant4)
-    print("Total de testes: ", total)
-    print("Quantidade de decifragens corretas: ", quantidade_decifragens_corretas
-          , " de ", total)
+    if params.dimension == 4:
+        print("slot1 [Diferenças distintas verificadas]: ", slot1)
+        print("slot2 [Diferenças distintas verificadas]: ", slot2)
+        print("slot3 [Diferenças distintas verificadas]: ", slot3)
+        print("slot4 [Diferenças distintas verificadas]: ", slot4)
+        print("Quantidade de erros no slot1: ", quant1)
+        print("Quantidade de erros no slot2: ", quant2)
+        print("Quantidade de erros no slot3: ", quant3)
+        print("Quantidade de erros no slot4: ", quant4)
+        print("Total de testes: ", total)
+        print("Quantidade de decifragens corretas: ", quantidade_decifragens_corretas
+            , " de ", total)
+    else:
+        if slots != [0] * params.dimension:
+            print("slots [Diferenças distintas verificadas]: ", slots)
+        else:
+            print("Nenhuma diferença no slot foi encontrado.")
+        
+        if quant != [0] * params.dimension:
+            print("Quantidade de erros: ", quant)
+        else:
+            print("Nenhum erro encontrado.")    
+        print("Total de testes: ", total)
+        print("Quantidade de decifragens corretas: ", quantidade_decifragens_corretas
+            , " de ", total)    
     print("--------------------------------------------------")
+    
+    print("DIMENSÃO............: ", params.dimension)
+    print("MÓDULO CIPHERTEXT...: ", params.ciphertext_modulus)
+    print("MÓDULO DO CLEARTEXT.: ", params.plaintext_modulus)
     sys.exit(1)
 
 
@@ -207,3 +247,86 @@ def vector_difference(v1, v2):
         raise ValueError("Os vetores devem ter o mesmo tamanho.")
     
     return [a - b for a, b in zip(v1, v2)]
+
+import random
+
+# -----------------------------------------------------
+# Gerar número primo que atenda à condição específica
+def is_prime(n, k=10):
+    """
+    Teste de primalidade probabilístico de Miller-Rabin.
+    
+    Parâmetros:
+      n: inteiro a ser testado.
+      k: número de iterações (quanto maior, maior a precisão do teste).
+    
+    Retorna:
+      True se n é provavelmente primo, False se é composto.
+    """
+    if n < 2:
+        return False
+    if n in (2, 3):
+        return True
+    if n % 2 == 0:
+        return False
+    
+    # Escreve n-1 como d * 2^s
+    s = 0
+    d = n - 1
+    while d % 2 == 0:
+        s += 1
+        d //= 2
+    
+    # Executa k iterações do teste
+    for _ in range(k):
+        a = random.randrange(2, n - 1)
+        x = pow(a, d, n)
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(s - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+def gerar_primo(inicio, fim, n):
+    """
+    Procura no intervalo [inicio, fim] o primeiro número primo que satisfaça:
+       primo % (2 * n) == 1.
+    Se o primo inicial não atender à condição, soma 2 ao candidato e testa novamente,
+    até encontrar um primo válido ou ultrapassar o limite 'fim'.
+    
+    Parâmetros:
+      inicio: início do intervalo de busca.
+      fim: fim do intervalo de busca.
+      n: inteiro usado na condição (primo % (2*n) == 1).
+    
+    Retorna:
+      O número primo que atende à condição ou None se nenhum for encontrado.
+    """
+    candidato = None
+    # Encontra o primeiro primo no intervalo
+    for i in range(inicio, fim + 1):
+        if is_prime(i):
+            candidato = i
+            break
+
+    if candidato is None:
+        print("Nenhum número primo encontrado no intervalo.")
+        return None
+
+    # Testa a condição para o primo encontrado, incrementando de 2 se necessário
+    while candidato <= fim:
+        if candidato % (2 * n) == 1:
+            return candidato
+        candidato += 2
+        # Garante que o novo candidato seja primo
+        while candidato <= fim and not is_prime(candidato):
+            candidato += 2
+
+    print("Nenhum primo que atenda à condição foi encontrado no intervalo.")
+    return None
+
+# -----------------------------------------------------
