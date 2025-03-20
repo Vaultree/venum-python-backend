@@ -49,15 +49,15 @@ def test_mul(input):
     quant2 = 0
     quant3 = 0
     quant4 = 0
-    total = 1000
+    total = 100
     quantidade_decifragens_corretas = 0
     
     for i in range(total):
         # print("ITERACAO: ", i)
             
         # lhs = vetor_aleatorio(4, 1, 10)
-        rhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
-        lhs = vetor_aleatorio(4, 1, params.plaintext_modulus-1)
+        rhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)
+        lhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)
 
         #rhs = vetor_aleatorio(4, 1, 64)
         #lhs = vetor_aleatorio(4, 1, 64)
@@ -117,6 +117,10 @@ def test_mul(input):
         
         if decrypted == expected:
             quantidade_decifragens_corretas += 1
+            
+        if decrypted != expected:
+            sys.exit(1)
+
         
         t = vector_difference(decrypted, expected)
         print("DIFERENCA: ", t)
