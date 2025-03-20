@@ -64,7 +64,7 @@ def test_mul(input):
         number = random.randint(1, params.plaintext_modulus-1)
         
         # lhs = [number,0,0,0]    
-        # lhs = [number,number,number,number]  
+        # lhs = [0,number,0,0]  
         # lhs = [0,0,number,0] 
         # lhs = [0,0,0,number]        
         # lhs = [10,20,30,40]
