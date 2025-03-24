@@ -136,7 +136,7 @@ class RelinKey:
         return aux_keys
 
     @staticmethod
-    def _compute_aux_keys_bfv(sk: SecretKey, base: int) -> Iterable[GlweSample]:
+    def _compute_aux_keys_crt(sk: SecretKey, base: int) -> Iterable[GlweSample]:
         digit_count = math.log(sk.dist.params.ciphertext_modulus, base)
         digit_count = math.ceil(digit_count)
         aux_keys = []
@@ -245,7 +245,7 @@ class RelinKey:
         return cls(aux_keys, base)
 
     @classmethod
-    def from_secret_key_bfv(cls, secret_key: SecretKey,
+    def from_secret_key_crt(cls, secret_key: SecretKey,
                         base: int = 2) -> 'RelinKey':
         """
         Generates a relinearization key from a secret key.
@@ -258,7 +258,7 @@ class RelinKey:
         - A relinearization key.
         """
 
-        aux_keys = cls._compute_aux_keys_bfv(secret_key, base)
+        aux_keys = cls._compute_aux_keys_crt(secret_key, base)
         return cls(aux_keys, base)
 
     def digit_count(self):

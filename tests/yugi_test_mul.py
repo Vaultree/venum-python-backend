@@ -109,7 +109,7 @@ def test_mul(input):
         print("c2 mask: ", rhs_cipher.glwe_sample.mask)
         print("c2 body: ", rhs_cipher.glwe_sample.body)
 
-        relin_key = RelinKey.from_secret_key_bfv(sk)
+        relin_key = RelinKey.from_secret_key_crt(sk)
         eval = Evaluator(dist, relin_key)
         cipher_result = eval.mul(lhs_cipher, rhs_cipher)
         
