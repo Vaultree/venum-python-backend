@@ -184,7 +184,7 @@ class RelinKey:
             # aqui geramos o ruído da chave de relinearização
             ruido = gerar_ruido(sk.dist.params.dimension, 3)
             
-            #print("Ruido simples - Key: ", ruido)
+            print("Ruido simples - Key: ", ruido)
             size = sk.dist.params.dimension
             ruido_key = []
             for ct in range(size):
@@ -192,9 +192,9 @@ class RelinKey:
                 ruido_key.append(tmp)
             
             ruido_key = Poly(reversed(ruido_key), x, domain=sk.dist.cipher_ring)
-            #print("Ruido CRT - Key: ", ruido_key)
+            print("Ruido CRT - Key: ", ruido_key)
             
-            # AS
+            # AS + (0,e)
             noisy_secret = masked_secret + ruido_key
             noisy_secret = noisy_secret % sk.dist.poly_modulus
             

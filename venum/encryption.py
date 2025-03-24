@@ -72,20 +72,58 @@ class Encryptor:
 
         plaintext_encoder = plaintext_encoder or self.plaintext_encoder
 
-        message = plaintext_encoder.encode(message)
+        # message = plaintext_encoder.encode(message)
         logger.debug(f'encoded message: {message}')
 
-        crt_message = self.dist.crt_encoder.encode_pure_message(
-            message).set_domain(self.dist.cipher_ring)
-        logger.debug(f'crt_message: {crt_message}')
+        # limita o ruído ao valor de p2 = 3
+        ruido = gerar_ruido(self.dist.params.dimension, 3)
+        
+        print("ruido da mensagem: ", ruido)
+        size = self.dist.params.dimension
+        crt_message = []
+        for ct in range(size):
+            tmp = encode_crt([message[ct], ruido[ct]], [self.dist.params.plaintext_modulus, 3])
+            crt_message.append(tmp)
+        
+        crt_message = Poly(reversed(crt_message), x, domain=self.dist.cipher_ring)
 
-        crt_noise1 = (self.dist.sample_crt_noise()
-                      .set_domain(self.dist.cipher_ring))
-        crt_noise2 = (self.dist.sample_crt_noise()
-                      .set_domain(self.dist.cipher_ring))
+        # crt_message = self.dist.crt_encoder.encode_pure_message(
+        #     message).set_domain(self.dist.cipher_ring)
+        # logger.debug(f'crt_message: {crt_message}')
 
-        u = self.dist.sample_polynomial(modulus=2)
+        # crt_noise1 = (self.dist.sample_crt_noise()
+        #               .set_domain(self.dist.cipher_ring))
+        # crt_noise2 = (self.dist.sample_crt_noise()
+        #               .set_domain(self.dist.cipher_ring))
+        
+        ruido = gerar_ruido(self.dist.params.dimension, 3)
+        print("ruido (noise 1): ", ruido)
+        size = self.dist.params.dimension
+        crt_noise1 = []
+        for ct in range(size):
+            tmp = encode_crt([0, ruido[ct]], [self.dist.params.plaintext_modulus, 3])
+            crt_noise1.append(tmp)
+            
+        crt_noise1 = Poly(reversed(crt_noise1), x, domain=self.dist.cipher_ring)
+
+        ruido = gerar_ruido(self.dist.params.dimension, 3)
+        print("ruido (noise 2): ", ruido)
+        size = self.dist.params.dimension
+        crt_noise2 = []
+        for ct in range(size):
+            tmp = encode_crt([0, ruido[ct]], [self.dist.params.plaintext_modulus, 3])
+            crt_noise2.append(tmp)
+
+        crt_noise2 = Poly(reversed(crt_noise2), x, domain=self.dist.cipher_ring)
+        
+        print("CRT MESSAGE: ", crt_message)
+        print("CRT (Noise 1): ", crt_noise1)
+        print("CRT (Noise 2): ", crt_noise2)
+
+        u = self.dist.sample_polynomial(modulus=8)
         logger.debug(f'sampled u: {u}')
+        
+        print("U: ", u)
 
         logger.debug(f"using public key: {pk.glwe_sample}")
         sample = GlweSample.compute_sample(
@@ -131,10 +169,10 @@ class Encryptor:
         crt_message = Poly(reversed(crt_message), x, domain=self.dist.cipher_ring)
         
         # print("=" * 80)
-        # print("PROCESSO DE CIFRAGEM")
-        # print("message .........: ", message)
-        # print("CRT (Message).: ", crt_message)
-        # print("ruido ...........: ", ruido)
+        print("PROCESSO DE CIFRAGEM")
+        print("message .........: ", message)
+        print("CRT (Message).: ", crt_message)
+        print("ruido ...........: ", ruido)
         
         # if crt_message != message:
         #     print("ERRO NA ENCODING =================================")
