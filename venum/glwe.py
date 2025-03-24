@@ -185,7 +185,7 @@ class GlweDistribution:
         crt_noise = Poly(reversed([0,0,0,0]), x, domain=self.cipher_ring)
         
         print("mask (sample zero encryption)......: ", mask)
-        print("crt_noise (sample zero encryption).: ", crt_noise)
+        # print("crt_noise (sample zero encryption).: ", crt_noise)
         
         return GlweSample._compute_zero_sample(
             mask, secret, crt_noise, self.poly_modulus)

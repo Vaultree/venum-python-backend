@@ -187,7 +187,8 @@ class Encryptor:
         # correção do processo de decifragem:
         
         size = len(crt_message.all_coeffs())    # dimensao
-        print("size: ", size)
+        print("size decrypt: ", size)
+                
         coeficientes_dec = crt_message.all_coeffs() 
         coeficientes_cresc = coeficientes_dec[::-1] # invertendo a ordem dos coeficientes
         print("coeficientes_cresc: ", coeficientes_cresc)
@@ -205,7 +206,15 @@ class Encryptor:
                 tmp += self.dist.params.plaintext_modulus    
             ret.append(tmp % self.dist.params.plaintext_modulus)
         
-        print("ret: ", ret) # aqui temos o cleartext
+        # arrumando o problema da decifragem errada
+        size = len(ret)
+        if size != self.dist.params.dimension:
+            while self.dist.params.dimension!= size: # ajustando o tamanho do vetor
+                ret.append(0)
+                if len(ret) == self.dist.params.dimension:
+                    break
+        
+        print("decifragem: ", ret, " | Tamanho: ",len(ret)) # aqui temos o cleartext
         return ret
         
         # from sympy import symbols

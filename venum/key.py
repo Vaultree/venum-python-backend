@@ -145,13 +145,13 @@ class RelinKey:
         
         sk2 = sk2 % sk.dist.poly_modulus
         
-        print("=" * 80)
-        print("GERANDO A CHAVE DE RELINEARIZAÇÃO")
+        # print("=" * 80)
+        # print("GERANDO A CHAVE DE RELINEARIZAÇÃO")
         
-        print("SK =", sk.secret_poly );
-        print("SK2 =", sk2 );
+        # print("SK =", sk.secret_poly );
+        # print("SK2 =", sk2 );
         
-        print("modulus: ", sk.dist.poly_modulus)
+        # print("modulus: ", sk.dist.poly_modulus)
         
         for i in range(digit_count):
             # mask = sk.dist.sample_mask() 
@@ -184,7 +184,7 @@ class RelinKey:
             # aqui geramos o ruído da chave de relinearização
             ruido = gerar_ruido(sk.dist.params.dimension, 3)
             
-            print("Ruido simples - Key: ", ruido)
+            #print("Ruido simples - Key: ", ruido)
             size = sk.dist.params.dimension
             ruido_key = []
             for ct in range(size):
@@ -192,14 +192,14 @@ class RelinKey:
                 ruido_key.append(tmp)
             
             ruido_key = Poly(reversed(ruido_key), x, domain=sk.dist.cipher_ring)
-            print("Ruido CRT - Key: ", ruido_key)
+            #print("Ruido CRT - Key: ", ruido_key)
             
             # AS
             noisy_secret = masked_secret + ruido_key
             noisy_secret = noisy_secret % sk.dist.poly_modulus
             
-            print("noisy_secret (antes)..: ", masked_secret)
-            print("noisy_secret (depois).: ", noisy_secret)
+            # print("noisy_secret (antes)..: ", masked_secret)
+            # print("noisy_secret (depois).: ", noisy_secret)
             
             
             # print("base ** i: ", base ** i)
@@ -219,10 +219,10 @@ class RelinKey:
             # print("mask: AUX KEY ", mask)
             # print("mask: AUX KEY (NEG)", -mask)
             
-            print("i = ", i)
-            print("mask: AUX KEY ", mask)
-            print("body: AUX KEY ", body)
-            print("-----------------------------------------------------")
+            # print("i = ", i)
+            # print("mask: AUX KEY ", mask)
+            # print("body: AUX KEY ", body)
+            # print("-----------------------------------------------------")
             
             aux_keys.append(GlweSample(mask=-mask , body=body))
         return aux_keys

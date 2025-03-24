@@ -35,10 +35,10 @@ def test_mul(input):
     params, lhs, rhs = input["params"], input["lhs"], input["rhs"]
     
     # envenenando os parametros
-    params.dimension = 4
+    params.dimension = 16
     params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
-    total = 1000    # TOTAL DE TESTES
+    total = 16  # TOTAL DE TESTES
 
     dist = GlweDistribution(params)
 
@@ -65,6 +65,8 @@ def test_mul(input):
             
         rhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)
         lhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)
+        
+        lhs = gerar_vetor_especial(params.dimension, i % params.dimension, params.plaintext_modulus-1)
 
         #rhs = vetor_aleatorio(4, 1, 64)
         #lhs = vetor_aleatorio(4, 1, 64)
@@ -119,8 +121,10 @@ def test_mul(input):
         decrypted = encryptor.decrypt(sk, cipher_result)
         
         generate_formula(lhs, rhs, params.plaintext_modulus)
-        print("RESULTADO: ", decrypted)
-        print("ESPERADO.: ", expected)
+        print("RESULTADO.: ", decrypted)
+        print("ESPERADO..: ", expected)
+        print("LHS.......: ", lhs)
+        print("RHS.......: ", rhs)
         
         if decrypted == expected:
             quantidade_decifragens_corretas += 1
@@ -330,3 +334,27 @@ def gerar_primo(inicio, fim, n):
     return None
 
 # -----------------------------------------------------
+
+def gerar_vetor_especial(n: int, pos: int, l: int) -> list[int]:
+    """
+    Gera um vetor (lista) de dimensão n com todos os valores iguais a 0,
+    exceto um único valor na posição especificada por 'pos'. Nesse elemento,
+    o valor é gerado aleatoriamente no intervalo [0, l).
+
+    Parâmetros:
+        n (int): Dimensão do vetor.
+        pos (int): Posição em que o valor não-zero será inserido.
+        l (int): Limite superior para o valor gerado (valor máximo possível é l-1).
+
+    Retorna:
+        list[int]: Vetor gerado.
+
+    Levanta:
+        ValueError: Se a posição 'pos' não estiver entre 0 e n-1.
+    """
+    if pos < 0 or pos >= n:
+        raise ValueError("A posição especificada está fora do intervalo do vetor.")
+
+    vetor = [0] * n
+    vetor[pos] = random.randrange(l)
+    return vetor
