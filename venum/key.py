@@ -97,7 +97,7 @@ def gen_key_pair(dist: GlweDistribution,
     - A tuple (sk, pk) where sk is the secret key and pk is the public key.
     """
 
-    sk = SecretKey.rand(dist, modulus)
+    sk = SecretKey.rand(dist, 2)
     pk = PublicKey.from_secret_key(sk)
     return sk, pk
 

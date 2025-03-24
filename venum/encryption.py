@@ -130,11 +130,11 @@ class Encryptor:
         
         crt_message = Poly(reversed(crt_message), x, domain=self.dist.cipher_ring)
         
-        print("=" * 80)
-        print("PROCESSO DE CIFRAGEM")
-        print("message .........: ", message)
-        print("CRT (Message).: ", crt_message)
-        print("ruido ...........: ", ruido)
+        # print("=" * 80)
+        # print("PROCESSO DE CIFRAGEM")
+        # print("message .........: ", message)
+        # print("CRT (Message).: ", crt_message)
+        # print("ruido ...........: ", ruido)
         
         # if crt_message != message:
         #     print("ERRO NA ENCODING =================================")
@@ -180,25 +180,25 @@ class Encryptor:
         crt_message = crt_message % self.dist.poly_modulus
         logger.debug(f"{crt_message}")
         
-        print("=" * 80)
-        print("PROCESSO DE DECIGRAGEM")
-        print("crt_message decifragem: ", crt_message)
+        # print("=" * 80)
+        # print("PROCESSO DE DECIGRAGEM")
+        # print("crt_message decifragem: ", crt_message)
         
         # correção do processo de decifragem:
         
         size = len(crt_message.all_coeffs())    # dimensao
-        print("size decrypt: ", size)
+        #print("size decrypt: ", size)
                 
         coeficientes_dec = crt_message.all_coeffs() 
         coeficientes_cresc = coeficientes_dec[::-1] # invertendo a ordem dos coeficientes
-        print("coeficientes_cresc: ", coeficientes_cresc)
+        #print("coeficientes_cresc: ", coeficientes_cresc)
         
         ret = []
         limit = self.dist.params.ciphertext_modulus / 2
-        print("limit: ", limit)
+        #print("limit: ", limit)
         for ct in coeficientes_cresc:
             tmp = ct
-            print("tmp: ", tmp)
+            #print("tmp: ", tmp)
             if tmp > limit:
                 tmp -= self.dist.params.ciphertext_modulus
             
@@ -214,7 +214,7 @@ class Encryptor:
                 if len(ret) == self.dist.params.dimension:
                     break
         
-        print("decifragem: ", ret, " | Tamanho: ",len(ret)) # aqui temos o cleartext
+        # print("decifragem: ", ret, " | Tamanho: ",len(ret)) # aqui temos o cleartext
         return ret
         
         # from sympy import symbols
@@ -293,18 +293,18 @@ class Rank2Cipher:
             domain=cipher_ring
         )
         
-        print("radix: ", relin_key.base);
-        print("digit_count: ", relin_key.digit_count());
-        print("Domain: ", cipher_ring);
+        # print("radix: ", relin_key.base);
+        # print("digit_count: ", relin_key.digit_count());
+        # print("Domain: ", cipher_ring);
         
         # decomposicao binaria
         # quad_decomposed = decompose_poly(self.quadratic, relin_key.base, relin_key.digit_count(), cipher_ring);
         
         # print("passou aqui");
         
-        print("quadratico: ", self.quadratic);
+        #print("quadratico: ", self.quadratic);
         quad_decomposed = [x for x in quad_decomposed];
-        print("Decomposicão: ", sum(1 for _ in quad_decomposed));
+        #print("Decomposicão: ", sum(1 for _ in quad_decomposed));
         # sys.exit(1)
         
         # if sum(1 for _ in quad_decomposed) != relin_key.digit_count():
@@ -324,18 +324,18 @@ class Rank2Cipher:
                 decomp = decomp % poly_modulus
             posic += 1
             
-        print("decomp.....: ", decomp)
-        print("quadratico.: ", self.quadratic)
+        # print("decomp.....: ", decomp)
+        # print("quadratico.: ", self.quadratic)
         
         if decomp != self.quadratic:
             print("ERRO NA DECOMPOSICAO BINÁRIA =================================")
             sys.exit(1)
             
-        if decomp == self.quadratic:
-            print("DECOMPOSICAO BINÁRIA OK !!!!!!!!!!!!!")    
+        # if decomp == self.quadratic:
+        #     print("DECOMPOSICAO BINÁRIA OK !!!!!!!!!!!!!")    
             
-        print("=" * 80)
-        print("PROCESSO DE RELINEARIZAÇÃO")    
+        # print("=" * 80)
+        # print("PROCESSO DE RELINEARIZAÇÃO")    
         
         mask = Poly([0], x, domain=cipher_ring)
         body = Poly([0], x, domain=cipher_ring)
@@ -349,13 +349,13 @@ class Rank2Cipher:
         mask += self.linear
         body += self.constant
         
-        print("Poly modulus >>>>>>>>>>>>>>>>: ", poly_modulus)
+        #print("Poly modulus >>>>>>>>>>>>>>>>: ", poly_modulus)
 
         mask = mask % poly_modulus
         body = body % poly_modulus
         
-        print("mask - final: ", mask)
-        print("body - final: ", body)
+        #print("mask - final: ", mask)
+        #print("body - final: ", body)
         
         return Cipher(GlweSample(mask=mask, body=body))
         # return Cipher(GlweSample(mask=body, body=mask))

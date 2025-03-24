@@ -35,10 +35,10 @@ def test_mul(input):
     params, lhs, rhs = input["params"], input["lhs"], input["rhs"]
     
     # envenenando os parametros
-    params.dimension = 16
+    params.dimension = 4
     params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
-    total = 16  # TOTAL DE TESTES
+    total = 4  # TOTAL DE TESTES
 
     dist = GlweDistribution(params)
 
@@ -46,6 +46,7 @@ def test_mul(input):
     encryptor = Encryptor(dist, PolynomialEncoder(dist))
     
     print("SK...: ", sk)
+    print("-" *  100)
     
     slot1 = []
     slot2 = []
@@ -85,10 +86,10 @@ def test_mul(input):
                 dist.poly_modulus.set_domain(dist.plaintext_ring))
         expected = list(reversed(expected.all_coeffs()))
         
-        print("VALORES..: ", lhs, rhs)
-        print("ESPERADO.: ", expected)
+        # print("VALORES..: ", lhs, rhs)
+        # print("ESPERADO.: ", expected)
         
-        generate_formula(lhs, rhs, params.plaintext_modulus)
+        #generate_formula(lhs, rhs, params.plaintext_modulus)
         #sys.exit(1)
         
         lhs_cipher = encryptor.encrypt(sk, lhs)
@@ -98,33 +99,34 @@ def test_mul(input):
         d2 = encryptor.decrypt(sk, rhs_cipher)
         
         # verificando a decifragem
-        print("VALORES ENTRADA.....: ", lhs, rhs)
-        print("VALORES DECIFRADOS..: ", d1, d2)
-        print("Produto esperado....: ", expected)
-        generate_formula(lhs, rhs, params.plaintext_modulus)
+        # print("VALORES ENTRADA.....: ", lhs, rhs)
+        # print("VALORES DECIFRADOS..: ", d1, d2)
+        # print("Produto esperado....: ", expected)
+        #generate_formula(lhs, rhs, params.plaintext_modulus)
         assert d1 == lhs
         assert d2 == rhs
         
-        print("c1 mask: ", lhs_cipher.glwe_sample.mask)
-        print("c1 body: ", lhs_cipher.glwe_sample.body)
+        # print("c1 mask: ", lhs_cipher.glwe_sample.mask)
+        # print("c1 body: ", lhs_cipher.glwe_sample.body)
 
-        print("c2 mask: ", rhs_cipher.glwe_sample.mask)
-        print("c2 body: ", rhs_cipher.glwe_sample.body)
+        # print("c2 mask: ", rhs_cipher.glwe_sample.mask)
+        # print("c2 body: ", rhs_cipher.glwe_sample.body)
 
         relin_key = RelinKey.from_secret_key_crt(sk)
         eval = Evaluator(dist, relin_key)
         cipher_result = eval.mul(lhs_cipher, rhs_cipher)
         
-        print("c3 mask: ", cipher_result.glwe_sample.mask)
-        print("c3 body: ", cipher_result.glwe_sample.body)
+        # print("c3 mask: ", cipher_result.glwe_sample.mask)
+        # print("c3 body: ", cipher_result.glwe_sample.body)
         
         decrypted = encryptor.decrypt(sk, cipher_result)
         
-        generate_formula(lhs, rhs, params.plaintext_modulus)
         print("RESULTADO.: ", decrypted)
         print("ESPERADO..: ", expected)
         print("LHS.......: ", lhs)
         print("RHS.......: ", rhs)
+        print("FÓRMULA WOLFRAM ALPHA: (VÁLIDO SOMENTE PARA 4 DIMENSÕES) ")
+        generate_formula(lhs, rhs, params.plaintext_modulus)
         
         if decrypted == expected:
             quantidade_decifragens_corretas += 1
@@ -176,7 +178,8 @@ def test_mul(input):
             #sys.exit(1)
             
         #assert decrypted == expected
-        print("--------------------------------------------------")
+        # print("--------------------------------------------------")
+        print("-" * 50)
     
     if params.dimension == 4:
         print("slot1 [Diferenças distintas verificadas]: ", slot1)
@@ -203,7 +206,7 @@ def test_mul(input):
         print("Total de testes: ", total)
         print("Quantidade de decifragens corretas: ", quantidade_decifragens_corretas
             , " de ", total)    
-    print("--------------------------------------------------")
+    print("=" * 100)
     
     print("DIMENSÃO............: ", params.dimension)
     print("MÓDULO CIPHERTEXT...: ", params.ciphertext_modulus)
@@ -226,7 +229,7 @@ def generate_formula(a, b, q):
     # Substitui o módulo 'q'
     formula = formula.replace("q", str(q))
     
-    print("Formula Wolfram Alpha:", formula)
+    print(formula)
 
 def vector_difference(v1, v2):
     """
