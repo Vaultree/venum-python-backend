@@ -108,7 +108,8 @@ class Encryptor:
         logger.debug(f'encoded message: {message}')
         
         # forcando o ruido == 0
-        ruido = plaintext_encoder.encode([0,0,0,0])
+        ruido = plaintext_encoder.encode([10,20,30,40])
+        # ruido = self.dist.sample_noise()
         
         crt_message = self.dist.crt_encoder.encode(
             message,
@@ -116,11 +117,14 @@ class Encryptor:
             ruido
         ).set_domain(self.dist.cipher_ring)
         
-        print("message cifragem.: ", message)
-        print("message CRT......: ", message)
+        print("=" * 80)
+        print("PROCESSO DE CIFRAGEM")
+        print("message .........: ", message)
+        print("CRT (Message).: ", crt_message)
+        print("ruido ...........: ", ruido)
         
-        if crt_message != message:
-            print("ERRO NA ENCODING =================================")
+        # if crt_message != message:
+        #     print("ERRO NA ENCODING =================================")
         
         # TODO: extract this into an easily testable function
         zero_sample = sk.dist.sample_zero_encryption(sk.secret_poly)

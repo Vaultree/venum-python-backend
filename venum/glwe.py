@@ -180,7 +180,7 @@ class GlweDistribution:
         #crt_noise = self.sample_crt_noise()
         
         # mask = Poly(reversed([100,200,300,400]), x, domain=self.cipher_ring)
-        tmp = [random.randint(1, 281474972188673) for _ in range(4)]
+        tmp = [random.randint(1, self.params.ciphertext_modulus-1) for _ in range(self.params.dimension)]
         mask = Poly(reversed(tmp), x, domain=self.cipher_ring)
         crt_noise = Poly(reversed([0,0,0,0]), x, domain=self.cipher_ring)
         
