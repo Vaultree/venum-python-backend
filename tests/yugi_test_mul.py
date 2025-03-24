@@ -35,11 +35,11 @@ def test_mul(input):
     params, lhs, rhs = input["params"], input["lhs"], input["rhs"]
     
     # envenenando os parametros
-    params.dimension = 16
+    params.dimension = 8
     params.ciphertext_modulus=1400472361734830353
     # params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
-    total = 10  # TOTAL DE TESTES
+    total = 100  # TOTAL DE TESTES
     chave_publica = True
 
     dist = GlweDistribution(params)

@@ -88,4 +88,4 @@ def test_encrypt_decrypt2(input):
     
     print("=" * 80)
     print("Quantidade de erros: ", quant_erros)
-    sys.exit(1)
+    #sys.exit(1)
