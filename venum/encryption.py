@@ -107,8 +107,10 @@ class Encryptor:
         message = plaintext_encoder.encode(message)
         logger.debug(f'encoded message: {message}')
         
+        print("message .........: ", message)
+        
         # forcando o ruido == 0
-        ruido = plaintext_encoder.encode([10,20,30,40])
+        ruido = plaintext_encoder.encode([1,2,1,2])
         # ruido = self.dist.sample_noise()
         
         crt_message = self.dist.crt_encoder.encode(

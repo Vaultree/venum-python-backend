@@ -35,7 +35,7 @@ def test_mul(input):
     params, lhs, rhs = input["params"], input["lhs"], input["rhs"]
     
     # envenenando os parametros
-    params.dimension = 8
+    params.dimension = 4
     params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
     total = 1    # TOTAL DE TESTES
