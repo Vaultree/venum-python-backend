@@ -1,3 +1,4 @@
+import random
 import sys
 from .logging import logger
 from .glwe import GlweSample, GlweDistribution
@@ -104,20 +105,30 @@ class Encryptor:
 
         plaintext_encoder = plaintext_encoder or self.plaintext_encoder
 
-        message = plaintext_encoder.encode(message)
+        # message = plaintext_encoder.encode(message)
         logger.debug(f'encoded message: {message}')
         
-        print("message .........: ", message)
+        # print("message .........: ", message)
         
-        # forcando o ruido == 0
-        ruido = plaintext_encoder.encode([1,2,1,2])
-        # ruido = self.dist.sample_noise()
+        # # forcando o ruido == 0
+        # ruido = plaintext_encoder.encode([1,2,1,2])
+        # # ruido = self.dist.sample_noise()
         
-        crt_message = self.dist.crt_encoder.encode(
-            message,
-            # self.dist.sample_noise()
-            ruido
-        ).set_domain(self.dist.cipher_ring)
+        # crt_message = self.dist.crt_encoder.encode(
+        #     message,
+        #     # self.dist.sample_noise()
+        #     ruido
+        # ).set_domain(self.dist.cipher_ring)
+        
+        # limita o ruído ao valor de p2 = 3
+        ruido = gerar_ruido(self.dist.params.dimension, 3)
+        size = self.dist.params.dimension
+        crt_message = []
+        for ct in range(size):
+            tmp = encode_crt([message[ct], ruido[ct]], [self.dist.params.plaintext_modulus, 3])
+            crt_message.append(tmp)
+        
+        crt_message = Poly(reversed(crt_message), x, domain=self.dist.cipher_ring)
         
         print("=" * 80)
         print("PROCESSO DE CIFRAGEM")
@@ -128,13 +139,14 @@ class Encryptor:
         # if crt_message != message:
         #     print("ERRO NA ENCODING =================================")
         
-        # TODO: extract this into an easily testable function
+        # # TODO: extract this into an easily testable function
         zero_sample = sk.dist.sample_zero_encryption(sk.secret_poly)
         
-        print("zero_sample mask: ", zero_sample.mask)
-        print("zero_sample body: ", zero_sample.body)
+        # print("zero_sample mask: ", zero_sample.mask)
+        # print("zero_sample body: ", zero_sample.body)
         
-        body = zero_sample.body + crt_message
+        # correcao: cifragem é -(mascara * key) + CRT(message)
+        body = (-(zero_sample.mask * sk.secret_poly) + crt_message) % self.dist.poly_modulus
         mask = zero_sample.mask
         sample = GlweSample(body=body, mask=mask)
         return Cipher(sample)
@@ -428,3 +440,117 @@ def poly_to_vector(poly: Poly) -> list:
 
     print(vec)    
     return vec
+
+# Faz o módulo de número positivo ou negativo
+def mod128(a: int, b: int) -> int:
+    """
+    Calcula a operação módulo de forma a garantir um resultado não negativo,
+    equivalente à função Rust apresentada.
+    
+    Parâmetros:
+        a (int): Número inteiro (pode ser negativo).
+        b (int): Número inteiro positivo (equivalente a u128 em Rust).
+    
+    Retorna:
+        int: O resultado de ((a % b) + b) % b, sempre não negativo.
+    """
+    return ((a % b) + b) % b
+
+# retorna o inverso multiplicativo de um numero
+def modinv(a: int, q: int) -> int:
+    """
+    Calcula o inverso multiplicativo de 'a' no módulo 'm', ou seja, encontra um inteiro x tal que (a * x) % m == 1.
+    
+    Parâmetros:
+        a (int): Número inteiro.
+        m (int): Módulo (inteiro positivo).
+    
+    Retorna:
+        int: O inverso multiplicativo de 'a' módulo 'm'.
+    
+    Levanta:
+        ValueError: Se o inverso não existir (quando gcd(a, m) != 1).
+    """
+    # Ajusta 'a' para o intervalo [0, m-1]
+    a = a % q
+    if a == 0:
+        raise ValueError("Não existe inverso multiplicativo para 0 no módulo dado.")
+    
+    # Inicializa os coeficientes para o algoritmo estendido
+    t, new_t = 0, 1
+    r, new_r = q, a
+
+    # Algoritmo estendido de Euclides
+    while new_r != 0:
+        quotient = r // new_r
+        t, new_t = new_t, t - quotient * new_t
+        r, new_r = new_r, r - quotient * new_r
+
+    # Se r > 1, 'a' e 'm' não são coprimos, logo o inverso não existe
+    if r > 1:
+        raise ValueError("O inverso multiplicativo não existe pois 'a' e 'm' não são coprimos.")
+    
+    # Ajusta t para ser positivo
+    if t < 0:
+        t = t + q
+    
+    return t
+
+def encode_crt(crtnumber: list[int], base: list[int]) -> int:
+    """
+    Implementa o algoritmo do Teorema Chinês do Resto para encontrar o número
+    que satisfaz o sistema de congruências dado pelos restos em 'crtnumber'
+    e modulos em 'base'.
+    
+    Parâmetros:
+        crtnumber (list[int]): Vetor com os restos das congruências.
+        base (list[int]): Vetor com os módulos (deve conter números coprimos entre si).
+    
+    Retorna:
+        int: Solução única do sistema de congruências módulo o produto dos elementos de 'base'.
+    """
+    # Calcula o produto de todos os módulos
+    prod = 1
+    for b in base:
+        prod *= b
+
+    size = len(base)
+    # Vetores intermediários
+    mult = []  # Cada elemento: prod // base[i]
+    vet1 = []  # mod128(mult[i], base[i])
+    vet2 = []  # inverso multiplicativo de vet1[i] módulo base[i]
+
+    for i in range(size):
+        tmp = prod // base[i]
+        mult.append(tmp)
+        # Calcula vet1[i] = mod128(tmp, base[i])
+        tmp_mod = mod128(tmp, base[i])
+        vet1.append(tmp_mod)
+        # Calcula vet2[i] = modinv(vet1[i], base[i])
+        tmp_inv = modinv(tmp_mod, base[i])
+        vet2.append(tmp_inv)
+
+    # Soma total: ∑ (crtnumber[i] * mult[i] * vet2[i])
+    sum_tot = 0
+    base_tot = 1
+    for i in range(size):
+        sum_tot += crtnumber[i] * mult[i] * vet2[i]
+        base_tot *= base[i]
+
+    # Retorna o resultado final, garantido no intervalo [0, base_tot - 1]
+    ret = mod128(sum_tot, base_tot)
+    return ret
+
+def gerar_ruido(n: int, limite: int) -> list[int]:
+    """
+    Gera um vetor com n números inteiros aleatórios no intervalo [0, limite).
+    Ou seja, cada posição do vetor terá um valor entre 0 e limite-1.
+    
+    Parâmetros:
+        n (int): Número de elementos no vetor.
+        limite (int): Limite superior (não incluso) para os valores.
+        
+    Retorna:
+        list[int]: Uma lista contendo n inteiros no intervalo [0, limite).
+    """
+    return [random.randrange(limite) for _ in range(n)]

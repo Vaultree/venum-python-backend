@@ -38,7 +38,7 @@ def test_mul(input):
     params.dimension = 4
     params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
-    total = 1    # TOTAL DE TESTES
+    total = 1000    # TOTAL DE TESTES
 
     dist = GlweDistribution(params)
 
