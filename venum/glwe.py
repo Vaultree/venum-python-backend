@@ -188,16 +188,15 @@ class GlweDistribution:
         
         print("mask (sample zero encryption)......: ", mask)
         
-        ruido = gerar_ruido(self.params.dimension, 3)
-        print("Noise (noise public key generation): ", ruido)
+        noise_vector = generate_noise(self.params.dimension, 3)
+        print("Noise (noise public key generation): ", noise_vector)
         size = self.params.dimension
         crt_noise = []
         for ct in range(size):
-            tmp = encode_crt([0, ruido[ct]], [self.params.plaintext_modulus, 3])
+            tmp = encode_crt([0, noise_vector[ct]], [self.params.plaintext_modulus, 3])
             crt_noise.append(tmp)
 
         crt_noise = Poly(reversed(crt_noise), x, domain=self.cipher_ring)
-        
         print("crt_noise (sample zero encryption).: ", crt_noise)
         
         # print("mask (sample zero encryption)......: ", mask)
@@ -306,7 +305,7 @@ def encode_crt(crtnumber: list[int], base: list[int]) -> int:
     ret = mod128(sum_tot, base_tot)
     return ret
 
-def gerar_ruido(n: int, limite: int) -> list[int]:
+def generate_noise(n: int, limite: int) -> list[int]:
     """
     Gera um vetor com n números inteiros aleatórios no intervalo [0, limite).
     Ou seja, cada posição do vetor terá um valor entre 0 e limite-1.

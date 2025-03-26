@@ -76,13 +76,13 @@ class Encryptor:
         logger.debug(f'encoded message: {message}')
 
         # limita o ruído ao valor de p2 = 3
-        ruido = gerar_ruido(self.dist.params.dimension, 3)
+        noise_vector = generate_noise(self.dist.params.dimension, 3)
         
-        print("ruido da mensagem: ", ruido)
+        print("message noise:", noise_vector)
         size = self.dist.params.dimension
         crt_message = []
         for ct in range(size):
-            tmp = encode_crt([message[ct], ruido[ct]], [self.dist.params.plaintext_modulus, 3])
+            tmp = encode_crt([message[ct], noise_vector[ct]], [self.dist.params.plaintext_modulus, 3])
             crt_message.append(tmp)
         
         crt_message = Poly(reversed(crt_message), x, domain=self.dist.cipher_ring)
@@ -96,22 +96,22 @@ class Encryptor:
         # crt_noise2 = (self.dist.sample_crt_noise()
         #               .set_domain(self.dist.cipher_ring))
         
-        ruido = gerar_ruido(self.dist.params.dimension, 3)
-        print("ruido (noise 1): ", ruido)
+        noise_vector = generate_noise(self.dist.params.dimension, 3)
+        print("(noise 1): ", noise_vector)
         size = self.dist.params.dimension
         crt_noise1 = []
         for ct in range(size):
-            tmp = encode_crt([0, ruido[ct]], [self.dist.params.plaintext_modulus, 3])
+            tmp = encode_crt([0, noise_vector[ct]], [self.dist.params.plaintext_modulus, 3])
             crt_noise1.append(tmp)
             
         crt_noise1 = Poly(reversed(crt_noise1), x, domain=self.dist.cipher_ring)
 
-        ruido = gerar_ruido(self.dist.params.dimension, 3)
-        print("ruido (noise 2): ", ruido)
+        noise_vector = generate_noise(self.dist.params.dimension, 3)
+        print("(noise 2): ", noise_vector)
         size = self.dist.params.dimension
         crt_noise2 = []
         for ct in range(size):
-            tmp = encode_crt([0, ruido[ct]], [self.dist.params.plaintext_modulus, 3])
+            tmp = encode_crt([0, noise_vector[ct]], [self.dist.params.plaintext_modulus, 3])
             crt_noise2.append(tmp)
 
         crt_noise2 = Poly(reversed(crt_noise2), x, domain=self.dist.cipher_ring)
@@ -159,11 +159,11 @@ class Encryptor:
         # ).set_domain(self.dist.cipher_ring)
         
         # limita o ruído ao valor de p2 = 3
-        ruido = gerar_ruido(self.dist.params.dimension, 3)
+        noise_vector = generate_noise(self.dist.params.dimension, 3)
         size = self.dist.params.dimension
         crt_message = []
         for ct in range(size):
-            tmp = encode_crt([message[ct], ruido[ct]], [self.dist.params.plaintext_modulus, 3])
+            tmp = encode_crt([message[ct], noise_vector[ct]], [self.dist.params.plaintext_modulus, 3])
             crt_message.append(tmp)
         
         crt_message = Poly(reversed(crt_message), x, domain=self.dist.cipher_ring)
@@ -172,7 +172,7 @@ class Encryptor:
         print("PROCESSO DE CIFRAGEM")
         print("message .........: ", message)
         print("CRT (Message).: ", crt_message)
-        print("ruido ...........: ", ruido)
+        print("ruido ...........: ", noise_vector)
         
         # if crt_message != message:
         #     print("ERRO NA ENCODING =================================")
@@ -341,33 +341,33 @@ class Rank2Cipher:
         # print("passou aqui");
         
         #print("quadratico: ", self.quadratic);
-        quad_decomposed = [x for x in quad_decomposed];
-        #print("Decomposicão: ", sum(1 for _ in quad_decomposed));
-        # sys.exit(1)
+        # quad_decomposed = [x for x in quad_decomposed]
+        # #print("Decomposicão: ", sum(1 for _ in quad_decomposed));
+        # # sys.exit(1)
         
-        # if sum(1 for _ in quad_decomposed) != relin_key.digit_count():
-        #     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        #     print(len(quad_decomposed), relin_key.digit_count())
-        #     print("ERRO NA DECOMPOSICAO BINÁRIA (numero de elementos diferentes )=================================")
-        #     sys.exit(1)
+        # # if sum(1 for _ in quad_decomposed) != relin_key.digit_count():
+        # #     print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        # #     print(len(quad_decomposed), relin_key.digit_count())
+        # #     print("ERRO NA DECOMPOSICAO BINÁRIA (numero de elementos diferentes )=================================")
+        # #     sys.exit(1)
         
-        decomp = Poly([0], x, domain=cipher_ring)
-        posic = 0
-        for ct in quad_decomposed:
-            #print("ct: ", ct)
-            if posic == 0:
-                decomp = ct * (2 ** posic)
-            else:
-                decomp = decomp + (ct * (2 ** posic))
-                decomp = decomp % poly_modulus
-            posic += 1
+        # decomp = Poly([0], x, domain=cipher_ring)
+        # posic = 0
+        # for ct in quad_decomposed:
+        #     #print("ct: ", ct)
+        #     if posic == 0:
+        #         decomp = ct * (2 ** posic)
+        #     else:
+        #         decomp = decomp + (ct * (2 ** posic))
+        #         decomp = decomp % poly_modulus
+        #     posic += 1
             
         # print("decomp.....: ", decomp)
         # print("quadratico.: ", self.quadratic)
         
-        if decomp != self.quadratic:
-            print("ERRO NA DECOMPOSICAO BINÁRIA =================================")
-            sys.exit(1)
+        # if decomp != self.quadratic:
+        #     print("ERRO NA DECOMPOSICAO BINÁRIA =================================")
+        #     sys.exit(1)
             
         # if decomp == self.quadratic:
         #     print("DECOMPOSICAO BINÁRIA OK !!!!!!!!!!!!!")    
@@ -588,7 +588,7 @@ def encode_crt(crtnumber: list[int], base: list[int]) -> int:
     ret = mod128(sum_tot, base_tot)
     return ret
 
-def gerar_ruido(n: int, limite: int) -> list[int]:
+def generate_noise(n: int, limite: int) -> list[int]:
     """
     Gera um vetor com n números inteiros aleatórios no intervalo [0, limite).
     Ou seja, cada posição do vetor terá um valor entre 0 e limite-1.

@@ -182,21 +182,21 @@ class RelinKey:
             # noisy_secret = masked_secret + ruido
             
             # aqui geramos o ruído da chave de relinearização
-            ruido = gerar_ruido(sk.dist.params.dimension, 3)
+            random_noise = generate_random_noise(sk.dist.params.dimension, 3)
             
-            print("Ruido simples - Key: ", ruido)
+            print("Ruido simples - Key: ", random_noise)
             size = sk.dist.params.dimension
-            ruido_key = []
+            noise_key = []
             for ct in range(size):
-                tmp = encode_crt([0, ruido[ct]], [sk.dist.params.plaintext_modulus, 3])
-                ruido_key.append(tmp)
+                tmp = encode_crt([0, random_noise[ct]], [sk.dist.params.plaintext_modulus, 3])
+                noise_key.append(tmp)
             
             # ruido_key = Poly(reversed(ruido), x, domain=sk.dist.cipher_ring)
-            ruido_key = Poly(reversed(ruido_key), x, domain=sk.dist.cipher_ring)
-            print("Ruido CRT - Key: ", ruido_key)
+            noise_key = Poly(reversed(noise_key), x, domain=sk.dist.cipher_ring)
+            print("Ruido CRT - Key: ", noise_key)
             
             # AS + (0,e)
-            noisy_secret = masked_secret + ruido_key
+            noisy_secret = masked_secret + noise_key
             noisy_secret = noisy_secret % sk.dist.poly_modulus
             
             # print("noisy_secret (antes)..: ", masked_secret)
@@ -369,7 +369,7 @@ def encode_crt(crtnumber: list[int], base: list[int]) -> int:
     ret = mod128(sum_tot, base_tot)
     return ret
 
-def gerar_ruido(n: int, limite: int) -> list[int]:
+def generate_random_noise(n: int, limite: int) -> list[int]:
     """
     Gera um vetor com n números inteiros aleatórios no intervalo [0, limite).
     Ou seja, cada posição do vetor terá um valor entre 0 e limite-1.

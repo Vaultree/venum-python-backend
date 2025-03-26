@@ -39,8 +39,8 @@ def test_mul(input):
     params.ciphertext_modulus=1400472361734830353
     #params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
-    total = 10000  # TOTAL DE TESTES
-    chave_publica = False
+    total = 1000  # TOTAL DE TESTES
+    chave_publica = True
 
     dist = GlweDistribution(params)
 
@@ -92,13 +92,13 @@ def test_mul(input):
         # lhs = [0,0,0,number]        
         # lhs = [10,20,30,40]
         
-        # verificando... 
+        # checking...
         expected = (Poly(reversed(lhs), x, domain=dist.plaintext_ring) *
                 Poly(reversed(rhs), x, domain=dist.plaintext_ring) %
                 dist.poly_modulus.set_domain(dist.plaintext_ring))
         expected = list(reversed(expected.all_coeffs()))
         
-        # preenchendo com zeros
+        # filling with zeros
         while True:
             if len(expected) < params.dimension:
                 expected.append(0)
