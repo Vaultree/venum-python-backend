@@ -189,14 +189,15 @@ class GlweDistribution:
         print("mask (sample zero encryption)......: ", mask)
         
         ruido = gerar_ruido(self.params.dimension, 3)
-        print("ruido (noise geração da chave publica): ", ruido)
+        print("Noise (noise public key generation): ", ruido)
         size = self.params.dimension
         crt_noise = []
         for ct in range(size):
             tmp = encode_crt([0, ruido[ct]], [self.params.plaintext_modulus, 3])
             crt_noise.append(tmp)
-            
+
         crt_noise = Poly(reversed(crt_noise), x, domain=self.cipher_ring)
+        
         print("crt_noise (sample zero encryption).: ", crt_noise)
         
         # print("mask (sample zero encryption)......: ", mask)

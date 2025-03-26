@@ -120,7 +120,7 @@ class Encryptor:
         print("CRT (Noise 1): ", crt_noise1)
         print("CRT (Noise 2): ", crt_noise2)
 
-        u = self.dist.sample_polynomial(modulus=4)
+        u = self.dist.sample_polynomial(modulus=2)
         logger.debug(f'sampled u: {u}')
         
         print("U: ", u)

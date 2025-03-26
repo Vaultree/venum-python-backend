@@ -8,7 +8,7 @@ image-name := package-name + "-build"
 container-build-dir := "./dist_container"
 
 test path='./':
-    {{ python }} -s -m pytest tests/{{path}}
+    {{ python }} -s -u -m pytest tests/{{path}}
 
 setup:
     echo "Setting up virtual environment"
@@ -17,7 +17,7 @@ setup:
     {{ pip }} install build
 
 build:
-    {{ python }} -s -m build --wheel
+    {{ python }} -s -u -m build --wheel
 
 build-container:
     #!/bin/sh
@@ -36,10 +36,10 @@ clean:
     rm -rf *.egg-info
 
 format:
-    @{{ python }} -s -m black {{ package-name }}/ tests/
+    @{{ python }} -u -s -m black {{ package-name }}/ tests/
 
 lint:
-    @{{ python }} -s -m flake8 {{ package-name }}/ tests/
+    @{{ python }} -u -s -m flake8 {{ package-name }}/ tests/
 
 repl:
     @{{ python }}

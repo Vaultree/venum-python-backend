@@ -191,6 +191,7 @@ class RelinKey:
                 tmp = encode_crt([0, ruido[ct]], [sk.dist.params.plaintext_modulus, 3])
                 ruido_key.append(tmp)
             
+            # ruido_key = Poly(reversed(ruido), x, domain=sk.dist.cipher_ring)
             ruido_key = Poly(reversed(ruido_key), x, domain=sk.dist.cipher_ring)
             print("Ruido CRT - Key: ", ruido_key)
             

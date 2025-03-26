@@ -67,7 +67,7 @@ def test_encrypt_decrypt2(input):
     # params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
 
-    total = 1000
+    total = 10000
     quant_erros = 0
     for ct in range(total):
         message = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)

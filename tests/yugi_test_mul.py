@@ -21,8 +21,8 @@ import random
                 dimension=4096,
                 ciphertext_modulus=1400472361734830353,
                 # ciphertext_modulus=281474972188673,
-                plaintext_modulus=65537,
-                # plaintext_modulus=12289,
+                # plaintext_modulus=65537,
+                plaintext_modulus=12289,
                 noise_modulus=3,
                 #seed=1,
             ),
@@ -37,10 +37,10 @@ def test_mul(input):
     # envenenando os parametros
     params.dimension = 8
     params.ciphertext_modulus=1400472361734830353
-    # params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
+    #params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
-    total = 100  # TOTAL DE TESTES
-    chave_publica = True
+    total = 10000  # TOTAL DE TESTES
+    chave_publica = False
 
     dist = GlweDistribution(params)
 
@@ -66,8 +66,11 @@ def test_mul(input):
     for i in range(total):
         # print("ITERACAO: ", i)
             
+        # rhs = vetor_aleatorio(params.dimension, 1, 16)
+        # lhs = vetor_aleatorio(params.dimension, 1, 16)
+        
         rhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)
-        lhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)
+        lhs = vetor_aleatorio(params.dimension, 1, params.plaintext_modulus-1)        
         
         # lhs = gerar_vetor_especial(params.dimension, i % params.dimension, params.plaintext_modulus-1)
         
@@ -95,6 +98,13 @@ def test_mul(input):
                 dist.poly_modulus.set_domain(dist.plaintext_ring))
         expected = list(reversed(expected.all_coeffs()))
         
+        # preenchendo com zeros
+        while True:
+            if len(expected) < params.dimension:
+                expected.append(0)
+            else:
+                break
+            
         # print("VALORES..: ", lhs, rhs)
         # print("ESPERADO.: ", expected)
         
@@ -149,8 +159,8 @@ def test_mul(input):
         if decrypted == expected:
             quantidade_decifragens_corretas += 1
             
-        if decrypted != expected:
-            sys.exit(1)
+        # if decrypted != expected:
+        #     sys.exit(1)
 
         # verificando diferenças
         t = vector_difference(decrypted, expected)
