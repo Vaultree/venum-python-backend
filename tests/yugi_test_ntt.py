@@ -77,7 +77,7 @@ def test_ntt(input):
     n = 4
     while True:
         print("-" * 80)
-        q = gerar_primo(2**32, 2**40, n)
+        q = gerar_primo(2**60, 2**62, n)
         
         # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
         psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)

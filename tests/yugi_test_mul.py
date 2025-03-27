@@ -342,6 +342,10 @@ def gerar_primo(inicio, fim, n):
       O número primo que atende à condição ou None se nenhum for encontrado.
     """
     candidato = None
+    
+    # aleatoriza o início da busca
+    inicio = random.randint(0, fim + 1)
+    
     # Encontra o primeiro primo no intervalo
     for i in range(inicio, fim + 1):
         if is_prime(i):
