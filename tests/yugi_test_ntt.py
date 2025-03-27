@@ -1,4 +1,5 @@
 import sys
+import time
 from tests.yugi_test_mul import generate_formula, gerar_primo
 from venum.ntt import find_primitive_root, generate_parameters, modular_inverse, multiply_poly_mod, polymul_ntt
 import pytest
@@ -91,7 +92,8 @@ def test_ntt(input):
             # Polynomial A(x) = 1 + 2x + 3x^2 + 4x^3 ...
             # Polynomial B(x) = 8 + 7x + 6x^2 + 5x^3 ...
             
-            max_point = 2**16
+            # max_point = 2**16
+            max_point = q-1
             a = generate_random_vector(n, 0, max_point)
             b = generate_random_vector(n, 0, max_point) 
 
@@ -110,6 +112,30 @@ def test_ntt(input):
         n = n * 2  # Dimension of the polynomial
         if n > 16384:
             break
+        
+    # Test Timing:
+    print("-" * 80)
+    n = 1024  # Dimension of the polynomial
+    q = gerar_primo(2**62, 2**63, n)
+    
+    # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
+    psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)
+    
+    max_point = q-1
+    a = generate_random_vector(n, 0, max_point)
+    b = generate_random_vector(n, 0, max_point) 
+
+    # Multiplication of polynomials using NTT/INTT
+    total_rounds= 1000
+    start_time = time.perf_counter()
+    for _ in range(total_rounds):
+        result = polymul_ntt(a, b, q, psi_rev, psi_inv_rev, n_inv, bar)
+        
+    end_time = time.perf_counter()
+    elapsed_time = (end_time - start_time) / total_rounds
+
+    # print("Polinômio resultante:", result)
+    print("Execution time: {:.6f} seconds".format(elapsed_time))
 
 # --------------------------------------------------------------
 def generate_random_vector(n, min_val, max_val):

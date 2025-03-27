@@ -427,3 +427,18 @@ def generate_parameters(n: int, q: int) -> tuple[list[int], list[int], int, Barr
     
     return psi_rev, psi_inv_rev, n_inv, bar
 
+# ----------------------------------------------------------------------------------------
+# Calculate the modular of a number a mod q (use this function to avoid negative results)
+def mod_number(a: int, q: int) -> int:
+    """
+    Returns the modulus of 'a' with respect to 'q', ensuring a result
+    in the range [0, q-1], even if 'a' is negative.
+
+    Args:
+    a (int): Integer (can be negative or positive).
+    q (int): Modulus (must be positive).
+
+    Returns:
+    int: The result of the operation a mod q.
+    """
+    return ((a % q) + q) % q

@@ -184,7 +184,14 @@ class Encryptor:
         # print("zero_sample body: ", zero_sample.body)
         
         # correcao: cifragem é -(mascara * key) + CRT(message)
-        body = (-(zero_sample.mask * sk.secret_poly) + crt_message) % self.dist.poly_modulus
+        # var_as = None
+        
+        # if isinstance(plaintext_encoder, BatchEncoder):
+        #     pass
+        # else:
+        var_as = zero_sample.mask * sk.secret_poly
+        
+        body = (-(var_as) + crt_message) % self.dist.poly_modulus
         mask = zero_sample.mask
         sample = GlweSample(body=body, mask=mask)
         return Cipher(sample)
