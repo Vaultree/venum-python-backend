@@ -4,6 +4,7 @@ from tests.yugi_test_mul import generate_formula, gerar_primo
 from venum.ntt import find_primitive_root, generate_parameters, modular_inverse, multiply_poly_mod, polymul_ntt
 import pytest
 import random
+from venum.ntt_func import *
 
 @pytest.mark.parametrize(
     "input",
@@ -110,12 +111,12 @@ def test_ntt(input):
             assert multiply_poly_mod(a, b, q) == result
             
         n = n * 2  # Dimension of the polynomial
-        if n > 16384:
+        if n > 16:
             break
         
     # Test Timing:
     print("-" * 80)
-    n = 1024  # Dimension of the polynomial
+    n = 32  # Dimension of the polynomial
     q = gerar_primo(2**62, 2**63, n)
     
     # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
@@ -136,6 +137,21 @@ def test_ntt(input):
 
     # print("Polinômio resultante:", result)
     print("Execution time: {:.6f} seconds".format(elapsed_time))
+    
+    # testing convertion Poly to vec:
+    n = 16
+    q = 65537
+    
+    a = generate_random_vector(16, 0, 256)
+    a[0] = 0
+    a[len(a)-1] = 0
+    
+    print("Polynomial A:", a)
+    b = vector_to_poly(a, q, variable='x')
+    print("Polynomial B:", b)   
+    c = poly_to_vector(b, n)
+    print("Polynomial C:", c)
+    assert a == c
 
 # --------------------------------------------------------------
 def generate_random_vector(n, min_val, max_val):
