@@ -82,7 +82,7 @@ def test_ntt(input):
             
         for _ in range(limit):
             print("-" * 80)
-            q = gerar_primo(2**60, 2**62, n)
+            q = gerar_primo(2**62, 2**63, n)
             
             # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
             psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)
@@ -90,8 +90,10 @@ def test_ntt(input):
             # Example of n-dimensional polynomials
             # Polynomial A(x) = 1 + 2x + 3x^2 + 4x^3 ...
             # Polynomial B(x) = 8 + 7x + 6x^2 + 5x^3 ...
-            a = generate_random_vector(n, 0, q - 1)
-            b = generate_random_vector(n, 0, q - 1) 
+            
+            max_point = 2**16
+            a = generate_random_vector(n, 0, max_point)
+            b = generate_random_vector(n, 0, max_point) 
 
             #print("Polynomial A:", a)
             #print("Polynomial B:", b)

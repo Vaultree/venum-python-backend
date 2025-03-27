@@ -178,8 +178,10 @@ def reduce_inline(x: int, bar: Barrett) -> int:
     # Conditional adjustment: subtracts bar.m if r is greater than or equal to bar.m, up to two times.
     if r >= bar.m:
         r -= bar.m
-    if r >= bar.m:
-        r -= bar.m
+        if r >= bar.m:
+            r -= bar.m
+            if r >= bar.m:
+                r %= bar.m
 
     return r
 
