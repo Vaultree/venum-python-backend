@@ -76,32 +76,37 @@ def test_ntt(input):
     
     n = 4
     while True:
-        print("-" * 80)
-        q = gerar_primo(2**60, 2**62, n)
-        
-        # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
-        psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)
-        
-        # Example of n-dimensional polynomials
-        # Polynomial A(x) = 1 + 2x + 3x^2 + 4x^3 ...
-        # Polynomial B(x) = 8 + 7x + 6x^2 + 5x^3 ...
-        a = generate_random_vector(n, 0, q - 1)
-        b = generate_random_vector(n, 0, q - 1) 
+        limit = 10
+        if n > 2048:
+            limit = 1
+            
+        for _ in range(limit):
+            print("-" * 80)
+            q = gerar_primo(2**60, 2**62, n)
+            
+            # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
+            psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)
+            
+            # Example of n-dimensional polynomials
+            # Polynomial A(x) = 1 + 2x + 3x^2 + 4x^3 ...
+            # Polynomial B(x) = 8 + 7x + 6x^2 + 5x^3 ...
+            a = generate_random_vector(n, 0, q - 1)
+            b = generate_random_vector(n, 0, q - 1) 
 
-        #print("Polynomial A:", a)
-        #print("Polynomial B:", b)
-        print("q...........:", q)
-        print("Dimensions..:", n)
-        
-        # Multiplication of polynomials using NTT/INTT
-        result = polymul_ntt(a, b, q, psi_rev, psi_inv_rev, n_inv, bar)
-        # print("Result of multiplication: ", result)
-        
-        # check if the result is correct
-        assert multiply_poly_mod(a, b, q) == result
-        
+            #print("Polynomial A:", a)
+            #print("Polynomial B:", b)
+            print("q...........:", q)
+            print("Dimensions..:", n)
+            
+            # Multiplication of polynomials using NTT/INTT
+            result = polymul_ntt(a, b, q, psi_rev, psi_inv_rev, n_inv, bar)
+            # print("Result of multiplication: ", result)
+            
+            # check if the result is correct
+            assert multiply_poly_mod(a, b, q) == result
+            
         n = n * 2  # Dimension of the polynomial
-        if n > 8192:
+        if n > 16384:
             break
 
 # --------------------------------------------------------------
