@@ -35,7 +35,7 @@ def test_mul(input):
     params, lhs, rhs = input["params"], input["lhs"], input["rhs"]
     
     # envenenando os parametros
-    params.dimension = 8
+    params.dimension = 16
     params.ciphertext_modulus=1400472361734830353
     #params.ciphertext_modulus = gerar_primo(2**60, 2**61, params.dimension)
     params.plaintext_modulus = 65537
@@ -239,7 +239,7 @@ def test_mul(input):
     print("DIMENSÃO............: ", params.dimension)
     print("MÓDULO CIPHERTEXT...: ", params.ciphertext_modulus)
     print("MÓDULO DO CLEARTEXT.: ", params.plaintext_modulus)
-    sys.exit(1)
+    # sys.exit(1)
 
 
 def generate_formula(a, b, q):
