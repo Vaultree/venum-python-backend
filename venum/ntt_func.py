@@ -1,5 +1,6 @@
 import random
 from symtable import Symbol
+import sys
 from venum.ntt import *
 from sympy import Poly, symbols
 from sympy.polys.domains import GF
@@ -520,3 +521,180 @@ def sub_msg(m1: List[int], m2: List[int], q):
         raise ValueError("The two messages must have the same length")
     
     return [(mod_number(m1[i] - m2[i], q)) for i in range(n)]
+
+# ----------------------------------------------------------------------------------
+# generate de relinearization key
+def generate_rlk(sk: List[int], base: int, p1: int, p2: int, q: int, params: tuple[list[int], list[int], int, Barrett]) -> list[Cryptogram]:
+    
+    digit_count = math.log(q, base)
+    digit_count = math.ceil(digit_count)
+    
+    n = len(sk)
+    
+    # collect the parameters
+    psi_rev, psi_inv_rev, n_inv, bar = params
+
+    rlk = []
+    
+    # calculate S^2
+    sk2 = polymul_ntt(sk, sk, q, psi_rev, psi_inv_rev, n_inv, bar)
+    
+    for i in range(digit_count):
+        
+        mask = generate_mask_vector(n, q)
+        mask2 = mask.copy()
+        noise = generate_noise_crt(n, p1, p2)
+        
+        # calculate AS
+        mask_secret = polymul_ntt(mask, sk, q, psi_rev, psi_inv_rev, n_inv, bar)
+        
+        # add noise to the result
+        mask_secret = [mod_number(mask_secret[i] + noise[i], q) for i in range(n)]
+        
+        message = sk2.copy()
+        
+        # multiply the message by the base
+        tmp = base ** i
+        message = [mod_number(tmp * message[i], q) for i in range(n)]
+            
+        body = [mod_number(mask_secret[i] + message[i], q) for i in range(n)]
+        mask = [mod_number(-1 * mask2[i], q) for i in range(n)]
+        
+        rlk.append(Cryptogram(body=body, mask=mask, batched=False, q=q))
+    
+    return rlk
+
+# ----------------------------------------------------------------------------------
+# calculate product of two cryptograms
+def product(cripto0: Cryptogram, cripto1: Cryptogram, params: tuple[list[int], list[int], int, Barrett]) -> (List[int], List[int],List[int]): # type: ignore
+    
+    n = len(cripto0.body)
+    if n != len(cripto1.body):
+        raise ValueError("The two ciphertexts must have the same length")
+    
+    if cripto0.q != cripto1.q:
+        raise ValueError("The two ciphertexts must have the same modulus")
+    
+    if cripto0.batched != cripto1.batched:
+        raise ValueError("The two ciphertexts must have the same batched mode")
+    
+    # collect the parameters
+    psi_rev, psi_inv_rev, n_inv, bar = params
+    
+    # body * body:
+    c0 = polymul_ntt(cripto0.body, cripto1.body, cripto0.q, psi_rev, psi_inv_rev, n_inv, bar)
+    
+    # (body * mask) + (mask * body):
+    t1 = polymul_ntt(cripto0.body, cripto1.mask, cripto0.q, psi_rev, psi_inv_rev, n_inv, bar)
+    t2 = polymul_ntt(cripto0.mask, cripto1.body, cripto0.q, psi_rev, psi_inv_rev, n_inv, bar)
+    c1 = [mod_number(t1[i] + t2[i], cripto0.q) for i in range(n)]
+    
+    # mask * mask:
+    c2 = polymul_ntt(cripto0.mask, cripto1.mask, cripto0.q, psi_rev, psi_inv_rev, n_inv, bar)
+    
+    return (c0, c1, c2)
+   
+# ----------------------------------------------------------------------------------
+def decompose_poly_list(poly: list[int], base: int, q: int) -> list[list[int]]:
+    """
+    Decompõe um polinômio (representado como uma lista de inteiros) em uma soma de polinômios,
+    onde os coeficientes de cada polinômio componente são os dígitos da representação
+    dos coeficientes do polinômio original na base 'base'. A operação trabalha em GF(modulo).
+
+    Cada polinômio é representado como uma lista de inteiros, onde o i-ésimo elemento é o coeficiente de x^i.
+    Assim, para cada i temos:
+    
+        poly[i] = components[0][i] + components[1][i]*base + components[2][i]*base^2 + ... + components[num_components-1][i]*base^(num_components-1)
+    
+    Parâmetros:
+      poly          : list[int]
+                      Polinômio de entrada (coeficiente de x^i é poly[i]).
+      base          : int
+                      Base usada para decomposição (por exemplo, 2 para binário ou 10 para decimal).
+      num_components: int
+                      Número de dígitos/componentes a serem extraídos.
+      modulo        : int
+                      Módulo usado para trabalhar em GF(modulo). Os coeficientes são reduzidos módulo 'modulo'.
+    
+    Retorna:
+      Uma lista de listas de inteiros, onde o j-ésimo elemento (0 ≤ j < num_components) é o polinômio
+      componente correspondente ao dígito extraído para a potência base^j.
+    
+    Lança:
+      ValueError: Se algum coeficiente do polinômio requer mais dígitos do que 'num_components'.
+    """
+    # Reduz os coeficientes do polinômio no corpo GF(modulo)
+    poly_mod = [c % q for c in poly]
+    n = len(poly_mod)
+    
+    # Inicializa num_components listas, cada uma com n coeficientes (um para cada termo do polinômio)
+    num_components = math.log(q, base)
+    num_components = math.ceil(num_components)
+    
+    components = [[0] * n for _ in range(num_components)]
+    
+    # print("componentes: ", num_components)
+    
+    # Para cada coeficiente, extrai os dígitos na base 'base'
+    for i, coeff in enumerate(poly_mod):
+        a = coeff
+        for j in range(num_components):
+            digit = a % base
+            # Em GF(modulo), garantimos que o dígito também esteja reduzido, embora geralmente base < modulo
+            components[j][i] = digit % q
+            a //= base
+            # print("a = ", a)
+            
+        if a != 0:
+            raise ValueError(f"O coeficiente do termo x^{i} requer mais de {num_components} dígitos na base {base}.")
+    
+    return components
+
+# ----------------------------------------------------------------------------------
+# relinearization
+def relinearize(prod: (List[int], List[int], List[int]), rlk: list[Cryptogram], batched: bool, base_decomposition: int, q: int, params: tuple[list[int], list[int], int, Barrett]) -> Cryptogram: # type: ignore
+    
+    (c0, c1, c2) = prod
+    n = len(c0)
+    
+    # decompose the c2
+    quad_decomposed = decompose_poly_list(c2, base_decomposition, q)
+    
+    decomp = quad_decomposed.copy()
+    lista = [0 for i in range(n)]
+    i = 0
+    for tmp in decomp:
+        t1 = base_decomposition ** i
+        t2 = [mod_number(tmp[j] * t1, q) for j in range(n)]
+        lista = [mod_number(lista[j] + t2[j], q) for j in range(n)]
+        i += 1
+        
+    # if lista != c2:
+    #     print("list: ", lista)
+    #     print("c2: ", c2)
+    #     print("ERRO NA DECOMPOSIÇÃO")
+    #     sys.exit(1)
+    # else:
+    #     print("DECOMPOSIÇÃO OK")
+        
+    
+    # collect the parameters
+    psi_rev, psi_inv_rev, n_inv, bar = params
+
+    # start mask and body
+    mask = [0 for i in range(n)]
+    body = [0 for i in range(n)]
+    
+    for aux_key, component in zip(rlk, quad_decomposed):   
+        # print("component: ", component, "tamanho: ", len(component))
+          
+        tmp = polymul_ntt(aux_key.mask, component, q, psi_rev, psi_inv_rev, n_inv, bar)
+        mask = [mod_number(mask[i] + tmp[i], q) for i in range(n)]
+        tmp = polymul_ntt(aux_key.body, component, q, psi_rev, psi_inv_rev, n_inv, bar)
+        body = [mod_number(body[i] + tmp[i], q) for i in range(n)]
+        
+    mask = [mod_number(mask[i] + c1[i], q) for i in range(n)]
+    body = [mod_number(body[i] + c0[i], q) for i in range(n)]   
+    
+    return Cryptogram(body=body, mask=mask, batched=batched, q=q)
+ 

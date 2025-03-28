@@ -12,29 +12,29 @@ from venum.ntt_func import *
         }
     ])
 def test_scheme(input):
-    # print("\n", "-" * 80)
-    # n = 8  # Dimension of the polynomial
-    # q = generate_modulus(2**60, 2**63, n)
+    print("\n", "-" * 80)
+    n = 64  # Dimension of the polynomial
+    q = generate_modulus(2**60, 2**63, n)
     
-    # # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
-    # psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)
+    # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
+    psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)
     
-    # # Example of n-dimensional polynomials
-    # # Polynomial A(x) = 1 + 2x + 3x^2 + 4x^3 ...
-    # # Polynomial B(x) = 8 + 7x + 6x^2 + 5x^3 ...
-    # a = generate_random_vector(n, 0, q - 1)
-    # b = generate_random_vector(n, 0, q - 1) 
+    # Example of n-dimensional polynomials
+    # Polynomial A(x) = 1 + 2x + 3x^2 + 4x^3 ...
+    # Polynomial B(x) = 8 + 7x + 6x^2 + 5x^3 ...
+    a = generate_random_vector(n, 0, q - 1)
+    b = generate_random_vector(n, 0, q - 1) 
 
-    # print("Polynomial A:", a)
-    # print("Polynomial B:", b)
-    # # print("q...........:", q)
+    print("Polynomial A:", a)
+    print("Polynomial B:", b)
+    # print("q...........:", q)
     
-    # # Multiplication of polynomials using NTT/INTT
-    # result = polymul_ntt(a, b, q, psi_rev, psi_inv_rev, n_inv, bar)
-    # print("Result of multiplication: ", result)
+    # Multiplication of polynomials using NTT/INTT
+    result = polymul_ntt(a, b, q, psi_rev, psi_inv_rev, n_inv, bar)
+    print("Result of multiplication: ", result)
     
-    # # check if the result is correct
-    # assert multiply_poly_mod(a, b, q) == result
+    # check if the result is correct
+    assert multiply_poly_mod(a, b, q) == result
     
     # --------------------------------------------------------------
     
