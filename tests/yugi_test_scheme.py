@@ -18,7 +18,7 @@ def test_scheme(input):
     
     # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
     psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)
-    
+        
     # Example of n-dimensional polynomials
     # Polynomial A(x) = 1 + 2x + 3x^2 + 4x^3 ...
     # Polynomial B(x) = 8 + 7x + 6x^2 + 5x^3 ...
@@ -40,11 +40,17 @@ def test_scheme(input):
     
     # Main parameters of scheme
     print("\n", "-" * 80)
-    n = 8  # Dimension of the polynomial
+    n = 4  # Dimension of the polynomial
     q = generate_modulus(2**62, 2**63, n)
     p1 = 65537  # space cleartext
     p2 = 3      # space noise
     
+    # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
+    params = generate_parameters(n, q)
+
+    # To use batched mode it is necessary to calculate psi_rev, psi_inv_rev, n_inv and bar for module p1
+    params_batched = generate_parameters(n, p1)
+
     print("q...........:", q)
     print("p1..........:", p1)
     print("p2..........:", p2)
@@ -54,9 +60,6 @@ def test_scheme(input):
     sk = create_sk(n, 0, 1, q)
     print("Secret key:", sk)
     
-    # Generate the required parameters for NTT/INTT (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
-    params = generate_parameters(n, q)
-
     # Generate the public key
     pk = generate_pk(sk, q, p1, p2, params)
     print("Public key:", pk)
@@ -70,22 +73,25 @@ def test_scheme(input):
     
     # Encrypt the message
     batched = True
-    c1 = encrypt_sk(sk, message, q, p1, p2, batched, params)
+    c1 = encrypt_sk(sk, message, q, p1, p2, batched, params, params_batched)
     print("Ciphertext:", c1)
     
     # Decrypt the message
-    d1 = decrypt(sk, c1, p1, params)
-    print("Decrypted message 1:", d1)
+    d1 = decrypt(sk, c1, p1, params, params_batched)
+    print("Decrypted message 1.:", d1)
+    print("original Message....:", message)
     assert message == d1
+    
+    # --------------------------------------------------------------
 
     # Encrypt the message
     print("-" * 80)    
     batched = False
-    c2 = encrypt_sk(sk, message, q, p1, p2, batched, params)
+    c2 = encrypt_sk(sk, message, q, p1, p2, batched, params, params_batched)
     print("Ciphertext:", c2)
     
     # Decrypt the message
-    d2 = decrypt(sk, c2, p1, params)
+    d2 = decrypt(sk, c2, p1, params, params_batched)
     print("Decrypted message 2:", d2)
     assert message == d2
     
@@ -99,11 +105,11 @@ def test_scheme(input):
     
     # Encrypt the message
     batched = False
-    c3 = encrypt_pk(pk, message, q, p1, p2, batched, params)
+    c3 = encrypt_pk(pk, message, q, p1, p2, batched, params, params_batched)
     print("Ciphertext:", c3)
     
     # Decrypt the message
-    d3 = decrypt(sk, c3, p1, params)
+    d3 = decrypt(sk, c3, p1, params, params_batched)
     print("Decrypted message 3:", d3)
     assert message == d3
 
@@ -113,11 +119,11 @@ def test_scheme(input):
     print("Message:", message)
  
     batched = True
-    c4 = encrypt_pk(pk, message, q, p1, p2, batched, params)
+    c4 = encrypt_pk(pk, message, q, p1, p2, batched, params, params_batched)
     print("Ciphertext:", c4)
     
     # Decrypt the message
-    d4 = decrypt(sk, c4, p1, params)
+    d4 = decrypt(sk, c4, p1, params, params_batched)
     print("Decrypted message 4:", d4)
     assert message == d4
     
@@ -132,8 +138,12 @@ def test_scheme(input):
     print("Message 2:", message2)
     
     # Encrypt the messages
-    c1 = encrypt_pk(pk, message1, q, p1, p2, False, params)
-    c2 = encrypt_pk(pk, message2, q, p1, p2, False, params)
+    batched = True
+    # c1 = encrypt_pk(pk, message1, q, p1, p2, batched, params, params_batched)
+    # c2 = encrypt_pk(pk, message2, q, p1, p2, batched, params, params_batched)
+    c1 = encrypt_sk(sk, message1, q, p1, p2, batched, params, params_batched)
+    c2 = encrypt_sk(sk, message2, q, p1, p2, batched, params, params_batched)
+
     print("Ciphertext 1:", c1)
     print("Ciphertext 2:", c2)
     
@@ -142,7 +152,7 @@ def test_scheme(input):
     print("Ciphertext 3:", c3)
     
     # Decrypt the message
-    d3 = decrypt(sk, c3, p1, params)
+    d3 = decrypt(sk, c3, p1, params, params_batched)
     print("Decrypted sum:", d3)
     assert add_msg(message1, message2, p1) == d3
     
@@ -157,8 +167,8 @@ def test_scheme(input):
     print("Message 2:", message2)
     
     # Encrypt the messages
-    c1 = encrypt_sk(sk, message1, q, p1, p2, False, params)
-    c2 = encrypt_sk(sk, message2, q, p1, p2, False, params)
+    c1 = encrypt_sk(sk, message1, q, p1, p2, False, params, params_batched)
+    c2 = encrypt_sk(sk, message2, q, p1, p2, False, params, params_batched)
     print("Ciphertext 1:", c1)
     print("Ciphertext 2:", c2)
     
@@ -167,7 +177,7 @@ def test_scheme(input):
     print("Ciphertext 3:", c3)
     
     # Decrypt the message
-    d3 = decrypt(sk, c3, p1, params)
+    d3 = decrypt(sk, c3, p1, params, params_batched)
     print("Decrypted sum:", d3)
     assert sub_msg(message1, message2, p1) == d3
 

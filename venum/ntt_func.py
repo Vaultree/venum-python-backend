@@ -316,7 +316,7 @@ def generate_modulus(inicio, fim, n):
     return None
 
 # -----------------------------------------------------
-def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched: bool, params: tuple[list[int], list[int], int, Barrett]) -> Cryptogram:
+def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched: bool, params: tuple[list[int], list[int], int, Barrett], params_batched: tuple[list[int], list[int], int, Barrett]) -> Cryptogram:
     """
     Encrypts a message using the secret key and a mask.
     
@@ -324,11 +324,25 @@ def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched:
     sk (list[int]): Secret key vector.
     msg (list[int]): Message vector.
     n (int): Dimension of the vectors.
+    params: Parameters for NTT/INTT.
+    q (int): Modulus of the Ring-LWE cryptosystem.
+    p1 (int): First prime number for CRT encoding.      
+    p2 (int): Second prime number for CRT encoding.
     batched (bool): If True, the encryption is done in batch mode.
+    params_batched: Parameters for NTT/INTT in batched mode.
     
     Returns:
     Cryptogram: Encrypted message.
     """
+    
+    #print("Start message: ", msg)
+    # verify the cryptography mode batched or not
+    if batched:
+        msg = msg.copy()
+        psi_rev, psi_inv_rev, n_inv, bar = params_batched
+        intt_generic(msg, psi_inv_rev, n_inv, p1, bar)  
+        #print("Batched message: ", msg)
+        
     n = len(sk)
     
     # collect the parameters
@@ -338,21 +352,16 @@ def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched:
     mask = generate_mask_vector(n, q)
     
     # Generate a noise vector
-    message = encode_msg_crt(msg, n, p1, p2)
+    lmessage = encode_msg_crt(msg, n, p1, p2)
     
     # multiply mask * secret key
     mask_key = polymul_ntt(mask, sk, q, psi_rev, psi_inv_rev, n_inv, bar)
     
     # add noise to the result
-    body = [mod_number(mask_key[i] + message[i], q) for i in range(n)]
+    body = [mod_number(mask_key[i] + lmessage[i], q) for i in range(n)]
     
     # convert the mask for negative multiply to -1
     mask = [mod_number(-1 * mask[i], q) for i in range(n)]
-    
-    # verify the cryptography mode batched or not
-    if batched:
-        intt_generic(body, psi_inv_rev, n_inv, q, bar)  
-        intt_generic(mask, psi_inv_rev, n_inv, q, bar)  
     
     # Calculate the public key
     crypto = Cryptogram(body=body, mask=mask, batched=batched,q=q)
@@ -360,7 +369,7 @@ def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched:
     return crypto
 
 # ------------------------------------------------------------------------------
-def decrypt(sk: list[int], crypto: Cryptogram, p1: int, params: tuple[list[int], list[int], int, Barrett]) -> list[int]:
+def decrypt(sk: list[int], crypto: Cryptogram, p1: int, params: tuple[list[int], list[int], int, Barrett], params_batched: tuple[list[int], list[int], int, Barrett]) -> list[int]:
     """
     Decrypts a message using the secret key and a mask.
     Parameters:
@@ -375,10 +384,6 @@ def decrypt(sk: list[int], crypto: Cryptogram, p1: int, params: tuple[list[int],
     
     # collect the parameters
     psi_rev, psi_inv_rev, n_inv, bar = params
-    
-    if crypto.batched:
-        ntt_generic(crypto.mask, psi_rev, crypto.q, bar)
-        ntt_generic(crypto.body, psi_rev, crypto.q, bar)
     
     # calculate AS: mask * secret key
     mask_key = polymul_ntt(crypto.mask, sk, crypto.q, psi_rev, psi_inv_rev, n_inv, bar)
@@ -398,11 +403,19 @@ def decrypt(sk: list[int], crypto: Cryptogram, p1: int, params: tuple[list[int],
         # if tmp < 0 or tmp >= p1:
         #     print("Error: Decryption failed.", "ct", tmp, "| p1 = ", p1)
         ret.append(tmp % p1) # here decrypt the message CRT
-    
+        
+    if crypto.batched:
+        #print("Batched message antes - decifragem: ", ret)
+        psi_rev, psi_inv_rev, n_inv, bar = params_batched
+        ntt_generic(ret, psi_inv_rev, p1, bar) 
+        ret = ret[::-1]
+        #print("Batched message depois - decifragem: ", ret)
+        return ret
+
     return ret
 # ------------------------------------------------------------------------------
 # function encrypt pk
-def encrypt_pk(pk: PublicKey, msg: List[int], q: int, p1: int, p2: int, batched: bool, params: tuple[list[int], list[int], int, Barrett]) -> Cryptogram:
+def encrypt_pk(pk: PublicKey, msg: List[int], q: int, p1: int, p2: int, batched: bool, params: tuple[list[int], list[int], int, Barrett], params_batched: tuple[list[int], list[int], int, Barrett]) -> Cryptogram:
     """
     Encrypts a message using the public key.
     
@@ -414,11 +427,18 @@ def encrypt_pk(pk: PublicKey, msg: List[int], q: int, p1: int, p2: int, batched:
     p2 (int): Second prime number for CRT encoding.
     batched (bool): If True, the encryption is done in batch mode.
     params (tuple): Parameters for NTT/INTT.
+    params_batched (tuple): Parameters for NTT/INTT in batch
     
     Returns:
     Cryptogram: Encrypted message.
     """
     n = len(pk.body)
+    
+    # verify the cryptography mode batched or not
+    if batched:
+        msg = msg.copy()
+        psi_rev, psi_inv_rev, n_inv, bar = params_batched
+        intt_generic(msg, psi_inv_rev, n_inv, p1, bar)  
     
     # collect the parameters
     psi_rev, psi_inv_rev, n_inv, bar = params
@@ -447,12 +467,7 @@ def encrypt_pk(pk: PublicKey, msg: List[int], q: int, p1: int, p2: int, batched:
     
     # add to message
     body = [mod_number(pk0[i] + message[i], q) for i in range(n)]
-    
-    # verify the cryptography mode batched or not
-    if batched:
-        intt_generic(body, psi_inv_rev, n_inv, q, bar)  
-        intt_generic(pk1, psi_inv_rev, n_inv, q, bar)  
-    
+        
     # Calculate the public key
     crypto = Cryptogram(body=body, mask=pk1, batched=batched,q=q)
     
@@ -660,14 +675,14 @@ def relinearize(prod: (List[int], List[int], List[int]), rlk: list[Cryptogram], 
     # decompose the c2
     quad_decomposed = decompose_poly_list(c2, base_decomposition, q)
     
-    decomp = quad_decomposed.copy()
-    lista = [0 for i in range(n)]
-    i = 0
-    for tmp in decomp:
-        t1 = base_decomposition ** i
-        t2 = [mod_number(tmp[j] * t1, q) for j in range(n)]
-        lista = [mod_number(lista[j] + t2[j], q) for j in range(n)]
-        i += 1
+    # decomp = quad_decomposed.copy()
+    # lista = [0 for i in range(n)]
+    # i = 0
+    # for tmp in decomp:
+    #     t1 = base_decomposition ** i
+    #     t2 = [mod_number(tmp[j] * t1, q) for j in range(n)]
+    #     lista = [mod_number(lista[j] + t2[j], q) for j in range(n)]
+    #     i += 1
         
     # if lista != c2:
     #     print("list: ", lista)

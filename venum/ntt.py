@@ -442,3 +442,16 @@ def mod_number(a: int, q: int) -> int:
     int: The result of the operation a mod q.
     """
     return ((a % q) + q) % q
+
+# ----------------------------------------------------------------------------------------
+# Multiply two polynomials modulo q (batched)
+def multiply_poly_mod_batched(a: list[int], b: list[int], q: int) -> list[int]:
+    s = len(a)
+    if s != len(b):
+        raise ValueError("Polynomials must be the same size.")
+    
+    for ct in range(s):
+        a[ct] = mod_number(a[ct] * b[ct], q)
+
+    return a
+    
