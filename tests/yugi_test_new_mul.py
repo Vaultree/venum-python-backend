@@ -157,8 +157,8 @@ def test_scheme_mul(input):
         
         # calculate the product
         start_time = time.perf_counter()
-        prod = product(c0, c1, params)    
-        c3 = relinearize(prod, rlk, c0.batched, base_decomposition, c0.q, params)
+        # multiply cryptograms        
+        c3 = multiply_cryptograms(c0, c1, rlk, base_decomposition, params)
         end_time = time.perf_counter()
         tempo += end_time - start_time
         

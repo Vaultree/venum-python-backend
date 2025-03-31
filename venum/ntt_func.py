@@ -712,4 +712,16 @@ def relinearize(prod: (List[int], List[int], List[int]), rlk: list[Cryptogram], 
     body = [mod_number(body[i] + c0[i], q) for i in range(n)]   
     
     return Cryptogram(body=body, mask=mask, batched=batched, q=q)
+
+# -----------------------------------------------------------------------------------------
+# function to multiply two polynomials
+def multiply_cryptograms(cripto0: Cryptogram, cripto1: Cryptogram, rlk: list[Cryptogram], base_decomposition, params: tuple[list[int], list[int], int, Barrett]) -> Cryptogram:
+    
+    # calculate the product
+    prod = product(cripto0, cripto1, params)
+    
+    # calculate the relinearization
+    c3 = relinearize(prod, rlk, cripto0.batched, base_decomposition, cripto0.q, params)
+    
+    return c3   
  
