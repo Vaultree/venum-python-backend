@@ -117,11 +117,11 @@ def test_scheme_mul(input):
     
 # --------------------------------------------------------------
 
-    n = 16  # Dimension of the polynomial
+    n = 32  # Dimension of the polynomial
     q = generate_modulus(2**60, 2**63, n)
     p1 = 65537
     p2 = 3
-    base_decomposition = 2
+    base_decomposition = 16
     batched = True
     
     print("\n", "-" * 80)
