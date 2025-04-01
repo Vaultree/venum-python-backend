@@ -179,7 +179,7 @@ def test_scheme_full(input):
             q = generate_modulus(2**62, 2**63, n)
             p1 = 65537
             p2 = 3
-            base_decomposition = 8
+            base_decomposition = 4
             if r%2 == 0:
                 batched = False
             else:
