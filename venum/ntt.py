@@ -112,7 +112,6 @@ def bit_reverse_order(vec: List[int], n: int) -> List[int]:
 def generate_psi_vectors(n: int, q: int, psi: int) -> Tuple[List[int], List[int]]:
     """
     Generates the psi_rev and psi_inv_rev vectors used in the NTT/INTT functions.
-
     Args:
     n (int): dimension (size of the vectors).
     q (int): module.
@@ -121,6 +120,9 @@ def generate_psi_vectors(n: int, q: int, psi: int) -> Tuple[List[int], List[int]
     Returns:
     Tuple[List[int], List[int]]: (psi_rev, psi_inv_rev)
     """
+    
+    # print(f"Generating psi vectors for n={n}, q={q}, psi={psi}")
+    
     # Vector for psi in direct order
     psi_vec = [1] * n
     for i in range(1, n):

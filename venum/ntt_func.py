@@ -163,11 +163,17 @@ def generate_mask_vector(n, q):
     Returns:
     list[int]: Mask vector with 'n' elements.
     """
+    
+    # print("MÁSCARA FIXADA PARA TESTE!!!!!!!!!!!!!!!!")
+    # return [585303824] * n
     return generate_random_vector(n, 0, q-1)
 
 # --------------------------------------------------------------
 # generate a noise CRT vector
 def generate_noise_crt(n: int, p1: int, p2: int) -> list[int]:
+    
+    # print("Noise zero para testes.............")
+    # noise_vector = [0] * n
     
     noise_vector = generate_random_vector(n, 0, p2-1)
     crt_noise = []
@@ -180,6 +186,10 @@ def generate_noise_crt(n: int, p1: int, p2: int) -> list[int]:
 # --------------------------------------------------------------
 # generate a noise CRT vector
 def encode_msg_crt(msg: List[int], n: int, p1: int, p2: int) -> list[int]:
+    
+    # ruído zero para testes
+    #print("Noise zero para testes.............")
+    #noise_vector = [0] * n
     
     noise_vector = generate_random_vector(n, 0, p2-1)
     message = []
@@ -340,8 +350,9 @@ def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched:
     if batched:
         msg = msg.copy()
         psi_rev, psi_inv_rev, n_inv, bar = params_batched
+        print("message: ", msg)
         intt_generic(msg, psi_inv_rev, n_inv, p1, bar)  
-        #print("Batched message: ", msg)
+        print("Batched message: ", msg)
         
     n = len(sk)
     
