@@ -68,12 +68,11 @@ def test_scheme_rotation(input):
 
     roots = primitive_roots(p1, n)
     matriz(roots[0],n, p1)
-
+    matriz_inv(roots[0],n, p1)
 
 # ---------------------------------------------------------------------------
 # paper: https://www.arxiv.org/pdf/2503.05136 - page 145
 # where J(h) is the rotation helper formula: J(h) = 5^h mod 2n, J∗(h) = −5^h mod 2n
-
 def matriz(w, n, p1):
     
     # generate matrix of size 8x8
@@ -92,9 +91,9 @@ def matriz(w, n, p1):
     for ct in range(n): 
         pot.append([ct] * n)
         
-    print(mat)
-    print(mat2)
-    print(pot)  
+    print("MAT:  ",mat)
+    print("MAT2: ",mat2)
+    print("POT: ", pot)  
     
     # generate matrix W (page 147)
     size = len(mat)
@@ -116,12 +115,67 @@ def matriz(w, n, p1):
     print("Matrix W:")
     for ct in range(size):
         print(mat[ct])
+
+# -------------------------------------------------------------------------------
+# paper: https://www.arxiv.org/pdf/2503.05136 - page 148        
+def matriz_inv(w, n, p1):
+    
+    # generate matrix of size 8x8
+    # and fill it with 1's and primitive root
+    mat = []
+    for ct in range(n): 
+        mat.append([1,w,w,w,w,w,w,w])
+        
+    # fill the first row with 1's and func_j
+    mat2 = [ ]
+    limit = n//2
+    for ct in range(limit): 
+        tmp = [1,func_j(1,ct,n), func_j(1,ct,n), func_j(1,ct,n), func_j(1,ct,n),
+               func_j(1,ct,n), func_j(1,ct,n), func_j(1,ct,n)]
+        mat2.append(tmp)
+    for ct in range(limit): 
+        tmp = [1,func_j(0,ct,n), func_j(0,ct,n), func_j(0,ct,n), func_j(0,ct,n),
+               func_j(0,ct,n), func_j(0,ct,n), func_j(0,ct,n)]
+        mat2.append(tmp)
+        
+    pot = []
+    for ct in range(n): 
+        tmp = [0,1,2,3,4,5,6,7]
+        pot.append(tmp)
+        
+    print("MAT:  ",mat)
+    print("MAT2: ",mat2)
+    print("POT: ", pot)  
+    
+    # generate matrix W (page 147)
+    size = len(mat)
+    print("Size: ", size)
+    for ct in range(size):
+        for ct2 in range(size):
+            t1 = mat[ct][ct2]
+            t2 = mat2[ct][ct2]
+            t1 = mod_number(t1**t2, p1)
+            mat[ct][ct2] = t1
+
+    for ct in range(size):
+        for ct2 in range(size):
+            t1 = mat[ct][ct2]
+            t2 = pot[ct][ct2]
+            t1 = mod_number(t1**t2, p1)
+            mat[ct][ct2] = t1
+
+    print("Matrix W^-1:")
+    for ct in range(size):
+        print(mat[ct])
+        
 # ---------------------------------------------------------------------------
 def func_j(t, h, n):
     if t == 1:
         return mod_number(5**h, 2*n)
     elif t == 0:
         return mod_number(-5**h, 2*n)
+    else:
+        sys.exit(1)
 
 # ---------------------------------------------------------------------------
 def prime_factors(n):
