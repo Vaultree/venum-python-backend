@@ -350,9 +350,9 @@ def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched:
     if batched:
         msg = msg.copy()
         psi_rev, psi_inv_rev, n_inv, bar = params_batched
-        print("message: ", msg)
+        #print("message: ", msg)
         intt_generic(msg, psi_inv_rev, n_inv, p1, bar)  
-        print("Batched message: ", msg)
+        #print("Batched message: ", msg)
         
     n = len(sk)
     

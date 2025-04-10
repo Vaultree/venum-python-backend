@@ -67,8 +67,90 @@ def test_scheme_rotation(input):
 
 
     roots = primitive_roots(p1, n)
-    matriz(roots[0],n, p1)
-    matriz_inv(roots[0],n, p1)
+    m1 = matriz(roots[0],n, p1)
+    m2 = matriz_inv(roots[0],n, p1)
+    
+    print("Matrix W:")  
+    show_matrix(m1)
+    
+    print("Matrix W^-1:")
+    show_matrix(m2)
+    
+    # print(extract_col(m2, 1))
+
+    t3 = mul_matrix(m1, m2, p1)
+    
+    print("Matrix W * W^-1:")
+    show_matrix(t3)
+    
+# ---------------------------------------------------------------------------
+def show_matrix(m):
+    """
+    Displays the matrix m with the elements aligned by column.
+    Each column uses the maximum width between its elements.    
+    """
+    if not m:
+        return
+
+    # Considerando que todas as linhas tenham o mesmo número de colunas:
+    num_colunas = len(m[0])
+
+    # Calcula a largura máxima para cada coluna
+    col_widths = []
+    for j in range(num_colunas):
+        # Para cada coluna, converte todos os elementos para string
+        # e pega o comprimento máximo
+        largura = max(len(str(linha[j])) for linha in m)
+        col_widths.append(largura)
+
+    # Imprime cada linha, formatando cada elemento com o respectivo tamanho da coluna
+    for linha in m:
+        linha_formatada = " ".join(f"{str(valor):>{col_widths[i]}}" for i, valor in enumerate(linha))
+        print(linha_formatada)
+# ---------------------------------------------------------------------------
+def extract_col(m,number_col):
+    size = len(m)
+    ret_line = []
+    for ct in range(size):
+        tmp = m[ct]
+        ret_line.append(tmp[number_col])
+    
+    return ret_line            
+
+# ---------------------------------------------------------------------------
+def extract_row(m,number_row):
+    return m[number_row]
+
+# ---------------------------------------------------------------------------
+def mul_col_row(col, row):
+    ret = 0
+    if len(col) != len(row):
+        print("Error: col and row must have the same size")
+        sys.exit(1)
+        
+    for ct in range(len(col)):
+        ret += col[ct] * row[ct]
+    
+    return ret
+
+# ---------------------------------------------------------------------------
+def mul_matrix(m1, m2, modulus):
+    """
+    Multiplies two matrices m1 and m2.
+    Returns the matrix resulting from the multiplication.
+    """
+    if len(m1) != len(m2[0]):
+        print("Error: m1 and m2 must have the same size")
+        sys.exit(1)
+        
+    result = []
+    for i in range(len(m1)):
+        row = []
+        for j in range(len(m2[0])):
+            row.append(mod_number(mul_col_row(extract_col(m1, i), extract_row(m2, j)),modulus))
+        result.append(row)
+    
+    return result
 
 # ---------------------------------------------------------------------------
 # paper: https://www.arxiv.org/pdf/2503.05136 - page 145
@@ -91,13 +173,13 @@ def matriz(w, n, p1):
     for ct in range(n): 
         pot.append([ct] * n)
         
-    print("MAT:  ",mat)
-    print("MAT2: ",mat2)
-    print("POT: ", pot)  
+    # print("MAT:  ",mat)
+    # print("MAT2: ",mat2)
+    # print("POT: ", pot)  
     
     # generate matrix W (page 147)
     size = len(mat)
-    print("Size: ", size)
+    # print("Size: ", size)
     for ct in range(size):
         for ct2 in range(size):
             t1 = mat[ct][ct2]
@@ -112,9 +194,11 @@ def matriz(w, n, p1):
             t1 = mod_number(t1**t2, p1)
             mat[ct][ct2] = t1
 
-    print("Matrix W:")
-    for ct in range(size):
-        print(mat[ct])
+    # print("Matrix W:")
+    # for ct in range(size):
+    #     print(mat[ct])
+        
+    return mat
 
 # -------------------------------------------------------------------------------
 # paper: https://www.arxiv.org/pdf/2503.05136 - page 148        
@@ -143,13 +227,13 @@ def matriz_inv(w, n, p1):
         tmp = [0,1,2,3,4,5,6,7]
         pot.append(tmp)
         
-    print("MAT:  ",mat)
-    print("MAT2: ",mat2)
-    print("POT: ", pot)  
+    # print("MAT:  ",mat)
+    # print("MAT2: ",mat2)
+    # print("POT: ", pot)  
     
     # generate matrix W (page 147)
     size = len(mat)
-    print("Size: ", size)
+    # print("Size: ", size)
     for ct in range(size):
         for ct2 in range(size):
             t1 = mat[ct][ct2]
@@ -164,10 +248,11 @@ def matriz_inv(w, n, p1):
             t1 = mod_number(t1**t2, p1)
             mat[ct][ct2] = t1
 
-    print("Matrix W^-1:")
-    for ct in range(size):
-        print(mat[ct])
+    # print("Matrix W^-1:")
+    # for ct in range(size):
+    #     print(mat[ct])
         
+    return mat
 # ---------------------------------------------------------------------------
 def func_j(t, h, n):
     if t == 1:
