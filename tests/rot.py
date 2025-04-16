@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 16
+    n = 8
     # q = 776077649
     # p1 = 17
     p2 = 3
