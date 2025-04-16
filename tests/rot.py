@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 12
+    n = 16
     # q = 776077649
     # p1 = 17
     p2 = 3
@@ -73,7 +73,7 @@ def test_scheme_rotation(input):
     pot = 3
     
     primes_list = primes(n)
-    #primes_list = [5]
+    primes_list = [5]
     print("Primes: ", primes)
 
     separator = 60
