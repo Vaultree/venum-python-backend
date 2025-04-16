@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 8
+    n = 16
     # q = 776077649
     # p1 = 17
     p2 = 3
@@ -53,12 +53,12 @@ def test_scheme_rotation(input):
         m0.append(ct+1)
     print("Plaintext: ", m0)
     
-    print("Parameters: ", params)
-    print("Parameters batched: ", params_batched)
+    #print("Parameters: ", params)
+    #print("Parameters batched: ", params_batched)
     
     # Encrypt the plaintexts secret key
     c0 = encrypt_sk(sk, m0, q, p1, p2, batched, params, params_batched)
-    #print("C0: ", c0)
+    print("C0: ", c0)
     
     decrypted = decrypt(sk, c0, p1, params, params_batched)
     print("Decrypted (c0): ", decrypted)
@@ -79,7 +79,7 @@ def test_scheme_rotation(input):
         print("Rotation......: ", rot)
         print("sk............: ", sk)   
         print("sk_rot........: ", view_sk_rot(sk_rot,q))   
-        # ks = encrypt_sk(sk_rot, m0, q, p1, p2, batched, params, params_batched)
+        # ks = encrypt_sk(sk_rot, s, q, p1, p2, batched, params, params_batched)
         
         # generate new Cryptogram
         body = c0.body
