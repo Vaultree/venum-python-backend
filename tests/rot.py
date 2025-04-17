@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 16
+    n = 8
     # q = 776077649
     # p1 = 17
     p2 = 3
@@ -62,6 +62,8 @@ def test_scheme_rotation(input):
     m0 = []
     for ct in range(n):
             m0.append(ct+1)
+            
+    # m0 = [1, 2, 3, 4, 5, 6, 7, 8]
     print("Plaintext: ", m0)
     
     # m1 = m0.copy()
@@ -84,24 +86,27 @@ def test_scheme_rotation(input):
     
     map = []
     pot = 3
-    
+
+    # found the automorphism
+    # 1) monta o conjunto de automorfismos    
     Z_star = [d for d in range(1, 2*n, 2) if math.gcd(d, 2*n) == 1]
     print("Automorfismos válidos (Z*_{}) = {}".format(2*n, Z_star))
 
-    primes_list = primes(n)
-    # primes_list = [5]
-    primes_list = Z_star
-    print("Primes: ", primes_list)
+    root_list = Z_star
+    print("root: ", root_list)
     
     separator = 60
     start = False
-    for pot in primes_list:
+    for pot in root_list:
         for rot in range(n):
             # at this point we have explored all possible rotations
+            
             if rot < (n/2):
-                rotation = pot**rot  
+                power = pot
+                rotation = power**rot  
             else:
-                rotation = -pot**rot
+                power = -pot
+                rotation = power**rot
                     
             # key rotation
             sk_rot = rotate_polynomial_coeffs(sk, rotation, n,q)
@@ -127,8 +132,8 @@ def test_scheme_rotation(input):
             
             # decrypted new Cryptogram with the new secret key (rotated)
             decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
-            print("Decrypted (c1).: ", decrypted)
-            print("-" * separator)
+            # print("Decrypted (c1).: ", decrypted)
+            # print("-" * separator)
                         
             # verify if the decrypted number is equal to the original plaintext
             # and if the rotation is correct
@@ -136,21 +141,25 @@ def test_scheme_rotation(input):
                 if start == True:
                     verify = 0
                     for ct in map:
-                        if decrypted != ct[2]:
+                        if decrypted != ct[3]:
                             verify  += 1                     
                     
                     if verify == len(map):        
-                        map.append([pot, rot, decrypted])
+                        map.append([power, rot, rotation, decrypted])
                 else:
-                    map.append([pot, rot, decrypted])
+                    map.append([power, rot, rotation, decrypted])
                     start = True
                 
     # Show the results
-    print("Primes: ", primes_list)
+    print("roots: ", root_list)
     for ct in map:
-        print("Power =", ct[0], "| Rotation =", ct[1], "| Decrypted = ", ct[2])
-        print("-" * separator)
+        print("Power = ", pad_num(ct[0],3), "| Rot = ", pad_num(ct[1],3),"| Rotation = ", pad_num(ct[2],8) ,"| Decrypted = ", ct[3])
+        # print(ct[3])
+        # print("-" * separator)
     print("Map size: ", len(map))
+    
+    # t = verify_total_rotation(map, n)
+    # print(t)
     
         # --------------------------------------------------------------------
     # # Mapeamento de rotações cíclicas reais para d ∈ Z*_2N
@@ -247,7 +256,7 @@ def verify_number(vet, m0):
         else:
             ret = False
             break
-        
+    
     return ret
 
 # ---------------------------------------------------------------------------
@@ -314,3 +323,31 @@ def poly_mul(a, b, params, q):
     # 4) Barrett‑reduce (ou %q direto)
     return [mod_number(ci, q) for ci in c]
 
+# -----------------------------------------------------------------
+# function to verify the total rotation
+def verify_total_rotation(map, n):
+    
+    vet = []
+    for ct in range(n):
+        vet.append(ct+1)
+        
+    for ct2 in range(n):
+        r = []
+        for ct in range(n):
+            tmp = map[ct][3][ct2]
+            r.append(tmp)
+
+        for ct3 in r:
+            if ct3 in vet==False:
+                print("Error: ", ct3)
+                return False
+                
+    return True
+
+# ------------------------------------------------------------------------
+def pad_num(n, width):
+    """
+    Retorna uma string com o número `n` alinhado à direita
+    em um campo de largura `width`, preenchendo com espaços.
+    """
+    return f"{n:>{width}d}"

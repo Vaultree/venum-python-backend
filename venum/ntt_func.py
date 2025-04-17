@@ -497,7 +497,49 @@ def encrypt_pk(pk: PublicKey, msg: List[int], q: int, p1: int, p2: int, batched:
     
     return crypto
 
-# ----------------------------------------------------------------------------------
+# # # ----------------------------------------------------------------------------------
+# def encrypt_sk(sk, msg, q, p1, p2,
+#                batched, params, params_batched) -> Cryptogram:
+#     n = len(sk)
+
+#     # 1) plain_coeffs em Z_p1
+#     if batched:
+#         plain_p1 = batch_encode(msg, params_batched, p1)
+#         plain_p1 = encode_msg_crt(plain_p1, n, p1, p2)
+#     else:
+#         # sua rotina CRT normal, retorna coefs em Z_p1
+#         plain_p1 = encode_msg_crt(msg, n, p1, p2)
+
+#     # 2) embed em Z_q via CRT
+#     # lmessage = encode_msg_crt(plain_p1, n, p1, p2)
+#     lmessage = plain_p1
+
+#     # 3) gera mask/noise e monta ciphertext
+#     mask = generate_mask_vector(n, q)
+#     mask_key = polymul_ntt(mask, sk, q, *params)
+#     body = [(mask_key[i] + lmessage[i]) % q for i in range(n)]
+#     neg_mask = [(-mask[i]) % q for i in range(n)]
+#     return Cryptogram(body=body, mask=neg_mask,
+#                       batched=batched, q=q)
+# # # ----------------------------------------------------------------------------------
+# def decrypt(sk, crypto, p1, params, params_batched) -> list[int]:
+#     n = len(sk)
+#     # 1) recover plain coefs em Z_p1
+#     mask_key = polymul_ntt(crypto.mask, sk, crypto.q, *params)
+#     result = [(crypto.body[i] + mask_key[i]) % crypto.q
+#               for i in range(n)]
+#     # CRT‑decode p1
+#     plain_p1 = [(x if x < crypto.q//2 else x - crypto.q) % p1
+#                 for x in result]
+
+#     # 2) un‑batch ou CRT final
+#     if crypto.batched:
+#         return batch_decode(plain_p1, params_batched, p1)
+#     else:
+#         # decodificação normal CRT
+#         return [v % p1 for v in plain_p1]
+# # # ----------------------------------------------------------------------------------
+
 # sum of cryptograms
 def sum_cryptograms(c1: Cryptogram, c2: Cryptogram):
     
@@ -749,3 +791,38 @@ def multiply_cryptograms(cripto0: Cryptogram, cripto1: Cryptogram, rlk: list[Cry
     
     return c3   
  
+# -----------------------------------------------------------------------------------------
+def batch_encode(vec: list[int],
+                 params_batched: tuple[list[int], list[int], int, Barrett],
+                 p1: int) -> list[int]:
+    """
+    1) bit-reverse do vetor de slots
+    2) inv‑NTT em Z_p1
+    3) garante mod p1
+    Retorna lista de coeficientes em Z_p1 para encriptar.
+    """
+    psi_rev, psi_inv_rev, n_inv, bar = params_batched
+    n = len(vec)
+    # 1) reordena para bit-reverse
+    v = bit_reverse_order(vec.copy(), n)
+    # 2) inv‑NTT em p1
+    intt_generic(v, psi_inv_rev, n_inv, p1, bar)
+    # 3) garante [0,p1)
+    return [mod_number(ci, p1) for ci in v]
+
+# -----------------------------------------------------------------------------------------
+def batch_decode(coefs: list[int],
+                 params_batched: tuple[list[int], list[int], int, Barrett],
+                 p1: int) -> list[int]:
+    """
+    1) NTT em Z_p1
+    2) bit-reverse para ordem natural
+    Retorna vetor de slots originais.
+    """
+    psi_rev, psi_inv_rev, n_inv, bar = params_batched
+    n = len(coefs)
+    v = coefs.copy()
+    # 1) NTT em p1
+    ntt_generic(v, psi_rev, p1, bar)
+    # 2) volta para ordem natural
+    return bit_reverse_order(v, n)
