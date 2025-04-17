@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 8
+    n = 16
     # q = 776077649
     # p1 = 17
     p2 = 3
@@ -30,8 +30,8 @@ def test_scheme_rotation(input):
         if p1 % 4 == 1:
             break    
         
-    q = 65537
-    p1 = 17
+    # q = 65537
+    # p1 = 17
     
     print("P1 = ", p1)
     print("N = ", n)
@@ -85,10 +85,14 @@ def test_scheme_rotation(input):
     map = []
     pot = 3
     
+    Z_star = [d for d in range(1, 2*n, 2) if math.gcd(d, 2*n) == 1]
+    print("Automorfismos válidos (Z*_{}) = {}".format(2*n, Z_star))
+
     primes_list = primes(n)
     # primes_list = [5]
+    primes_list = Z_star
     print("Primes: ", primes_list)
-
+    
     separator = 60
     start = False
     for pot in primes_list:
@@ -104,8 +108,12 @@ def test_scheme_rotation(input):
             
             print("Rotation......: ", rot)
             print("sk............: ", sk)   
-            print("sk_rot........: ", view_sk_rot(sk_rot,q))   
-            # ks = encrypt_sk(sk_rot, s, q, p1, p2, batched, params, params_batched)
+            # 2) só para exibí-la de forma humana, use uma cópia!
+            signed = view_sk_rot(sk_rot.copy(), q)
+            print("sk_rot (signed):", signed)
+            
+            # generate rotation key
+            ks = encrypt_sk(sk, sk_rot, q, p1, p2, batched, params, params_batched)
             
             # generate new Cryptogram
             body = c0.body
@@ -119,9 +127,9 @@ def test_scheme_rotation(input):
             
             # decrypted new Cryptogram with the new secret key (rotated)
             decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
-            print("Decrypted.....: ", decrypted)
+            print("Decrypted (c1).: ", decrypted)
             print("-" * separator)
-            
+                        
             # verify if the decrypted number is equal to the original plaintext
             # and if the rotation is correct
             if verify_number(decrypted, m0) == True:
@@ -138,48 +146,67 @@ def test_scheme_rotation(input):
                     start = True
                 
     # Show the results
+    print("Primes: ", primes_list)
     for ct in map:
         print("Power =", ct[0], "| Rotation =", ct[1], "| Decrypted = ", ct[2])
         print("-" * separator)
     print("Map size: ", len(map))
     
         # --------------------------------------------------------------------
-    # Mapeamento de rotações cíclicas reais para d ∈ Z*_2N
-    print("\n" + "="*separator)
-    print("MAPEANDO ROTAÇÕES CÍCLICAS EM FUNÇÃO DE AUTOMORFISMOS d ∈ Z*_{})".format(2*n))
-    print("="*separator)
+    # # Mapeamento de rotações cíclicas reais para d ∈ Z*_2N
+    # print("\n" + "="*separator)
+    # print("MAPEANDO ROTAÇÕES CÍCLICAS EM FUNÇÃO DE AUTOMORFISMOS d ∈ Z*_{})".format(2*n))
+    # print("="*separator)
 
-    Z_star = [d for d in range(1, 2*n, 2) if math.gcd(d, 2*n) == 1]
-    print("Automorfismos válidos (Z*_{}) = {}".format(2*n, Z_star))
+    # Z_star = [d for d in range(1, 2*n, 2) if math.gcd(d, 2*n) == 1]
+    # print("Automorfismos válidos (Z*_{}) = {}".format(2*n, Z_star))
 
-    rotacao_para_d = {}
+    # rotacao_para_d = {}
 
-    for d in Z_star:
-        sk_rot = rotate_polynomial_coeffs(sk.copy(), d, n, q)
-        body   = rotate_polynomial_coeffs(c0.body, d, n, q)
-        mask   = rotate_polynomial_coeffs(c0.mask, d, n, q)
+    # for d in Z_star:
+    #     d = d % (2*n)
+    #     print(f"d = {d}")
+    #     sk_rot = rotate_polynomial_coeffs(sk.copy(), d, n, q)
+    #     body   = rotate_polynomial_coeffs(c0.body, d, n, q)
+    #     mask   = rotate_polynomial_coeffs(c0.mask, d, n, q)
 
-        c1 = Cryptogram(body=body, mask=mask, batched=c0.batched, q=c0.q)
-        decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
+    #     c1 = Cryptogram(body=body, mask=mask, batched=c0.batched, q=c0.q)
+    #     decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
 
-        for i in range(n):
-            esperado = m0[i:] + m0[:i]  # rotação à esquerda de i
-            if decrypted == esperado:
-                rotacao_para_d[i] = d
-                print(f"✅ Rotação de {i} posição(ões) = automorfismo d = {d}")
-                break
+    #     for i in range(n):
+    #         esperado = m0[i:] + m0[:i]  # rotação à esquerda de i
+    #         if decrypted == esperado:
+    #             rotacao_para_d[i] = d
+    #             print(f"✅ Rotação de {i} posição(ões) = automorfismo d = {d}")
+    #             break
 
-    print("\n" + "-"*separator)
-    print("TABELA: ROTACAO CÍCLICA (i) → AUTOMORFISMO d")
-    print("-"*separator)
-    for i in sorted(rotacao_para_d.keys()):
-        print(f"Rotação {i:2d} → d = {rotacao_para_d[i]}")
-    print("-"*separator)
-
+    # print("\n" + "-"*separator)
+    # print("TABELA: ROTACAO CÍCLICA (i) → AUTOMORFISMO d")
+    # print("-"*separator)
+    # for i in sorted(rotacao_para_d.keys()):
+    #     print(f"Rotação {i:2d} → d = {rotacao_para_d[i]}")
+    # print("-"*separator)
 
 # -----------------------------------------------------------------------
-# function to rotate the coefficients
 def rotate_polynomial_coeffs(coeffs, d, N, q):
+    """
+    Aplica o automorfismo x -> x^d mod (x^N + 1) no polinômio dado
+    pelos coeficientes `coeffs`, de comprimento N, em Z_q.
+    Devolve o vetor de coeficientes rotacionado com os sinais corretos.
+    """
+    rotated = [0] * N
+    for i in range(N):
+        # índice no polinômio resultante
+        j = (i * d) % N
+        # quantas vezes "ultrapassou" N para determinar o sinal
+        k = (i * d) // N
+        sign = -1 if (k % 2) else 1
+        # aplica mod q (use sua função mod_number ou %q direto)
+        rotated[j] = (coeffs[i] * sign) % q
+    return rotated
+# -----------------------------------------------------------------------
+# function to rotate the coefficients
+def rotate_polynomial_coeffs2(coeffs, d, N, q):
     tmp = []
     ret = []
     sig = []
@@ -236,4 +263,54 @@ def primes(limite):
         if eh_primo:
             primos.append(num)
     return primos
+
+# ---------------------------------------------------------------------------------------
+def generate_galois_keys(sk, N, q, p1, p2, batched, params, params_batched):
+    """
+    Gera um dicionário de chaves Galois para todos os d em Z*_{2N}.
+    Cada entrada galois_keys[d] é um ciphertext que, ao ser usado
+    em key‑switching, permite aplicar o automorfismo x->x^d.
+    """
+    # 1) monta o conjunto de automorfismos
+    Z_star = [d for d in range(1, 2*N, 2) if math.gcd(d, 2*N) == 1]
+
+    galois_keys = {}
+    for d in Z_star:
+        # 2) rotaciona a sk “no anel”
+        sk_rot = rotate_polynomial_coeffs(sk, d, N, q)
+        # 3) encripta sk_rot sob sk (aqui sk é a chave que vai
+        #    conseguir desfazer a encriptação, via decrypt)
+        ks = encrypt_sk(
+            sk,           # chave que poderá decriptar
+            sk_rot,       # “mensagem” (o vetor de coefs da sk rotacionada)
+            q, p1, p2,
+            batched,
+            params,
+            params_batched
+        )
+        galois_keys[d] = ks
+
+    return galois_keys
+
+# ---------------------------------------------------------------------------
+def poly_mul(a, b, params, q):
+    """
+    Multiplica dois polinômios a(x) e b(x) em R_q[x]/(x^N+1)
+    usando NTT. 
+    `params` = (psi_rev, psi_inv_rev, n_inv, bar).
+    """
+    n = len(a)
+    psi_rev, psi_inv_rev, n_inv, bar = params
+    
+    # 1) leva para domínio NTT
+    ntt_generic(a, psi_rev,q, bar)
+    ntt_generic(b, psi_rev,q, bar)
+    
+    # 2) hadamard point‑wise
+    c = [mod_number(a[i] * b[i], q) for i in range(n)]
+    
+    # 3) volta para domínio coeficiente
+    intt_generic(c, psi_inv_rev, n_inv, q, bar)
+    # 4) Barrett‑reduce (ou %q direto)
+    return [mod_number(ci, q) for ci in c]
 
