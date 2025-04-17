@@ -61,6 +61,63 @@ def find_primitive_root(q: int, n: int) -> int:
         return pow(g, exp, q)
 
 # ----------------------------------------------------------------------------------------
+def get_prime_factors(num):
+    """Helper function to get distinct prime factors of num."""
+    factors = set()
+    d = 2
+    temp_num = num
+    while d * d <= temp_num:
+        if temp_num % d == 0:
+            factors.add(d)
+            while temp_num % d == 0:
+                temp_num //= d
+        # Otimização: só testar 2 e depois ímpares
+        d = d + 1 if d == 2 else d + 2
+    if temp_num > 1:
+        factors.add(temp_num)
+    return list(factors)
+
+# --------------------------------------------------------------------------------
+def find_primitive_root2(q: int, n: int) -> int:
+    """
+    Finds a primitive 2n-th root of unity modulo q.
+    Requires q to be prime and q = 1 (mod 2n).
+    """
+    if q % (2 * n) != 1:
+        raise ValueError(f"q={q} must be 1 mod 2n={2*n}")
+
+    order = 2 * n
+    exponent = (q - 1) // order # Exponent to potentially lower the order from q-1 to 2n
+
+    # Get distinct prime factors of the target order 2n
+    prime_factors_of_order = get_prime_factors(order)
+
+    # Iterate through candidates for the base g
+    g = 2
+    while g < q:
+        # Calculate the candidate 2n-th root of unity
+        omega = pow(g, exponent, q)
+
+        # omega == 1 cannot be primitive if order > 1
+        if omega == 1:
+            g += 1
+            continue
+
+        # Check if omega has order *exactly* 2n
+        is_primitive = True
+        for p in prime_factors_of_order:
+            test_exponent = order // p
+            if pow(omega, test_exponent, q) == 1:
+                is_primitive = False
+                break # Failed the test for this prime factor p
+
+        if is_primitive:
+            return omega # Found a primitive 2n-th root
+
+        g += 1 # Try the next base
+
+    raise ValueError(f"No primitive {order}-th root of unity found for q={q}")
+# ----------------------------------------------------------------------------------------
 """
 Function to calculate the modular inverse of a number a mod q.
 Args:   
@@ -332,6 +389,126 @@ def intt_generic(input_list: list[int], psi_inv_rev: list[int], n_inv: int, q: i
         input_list[i + half] = reduce_inline((u + q - v) * s_n_inv, bar)
         
 # ----------------------------------------------------------------------------------------
+# NTT (Number Theoretic Transform) - Cooley-Tukey Algorithm
+# Espera entrada em ordem NATURAL, produz saída em ordem BIT-REVERSA.
+def ntt_generic2(input_list: list[int], psi_rev: list[int], q: int, bar: Barrett) -> None:
+#def ntt_cooley_tukey(input_list: list[int], psi_rev: list[int], q: int, bar: Barrett) -> None:
+    """
+    Performs NTT using the Cooley-Tukey algorithm (decimation-in-time).
+    Modifies 'input_list' in-place.
+    Assumes natural order input and produces bit-reversed order output.
+
+    Args:
+    input_list (list[int]): Polynomial coefficients (natural order).
+    psi_rev (list[int]): Roots of unity in bit-reversed order.
+    q (int): Modulus.
+    bar (Barrett): Barrett reduction object for modulus q.
+    """
+    n = len(input_list)
+    if n < 1 or (n & (n - 1)) != 0:
+        raise ValueError("N must be a power of 2 and >= 1")
+    if n == 1:
+        return # NTT of size 1 is identity
+
+    t = n
+    m = 1
+    while m < n:
+        t //= 2
+        if t == 0: # Proteção caso n não seja potência de 2 (já verificado, mas seguro)
+             break
+        for i in range(m):
+            # w_m^i, mas indexado usando a ordem bit-reverse de psi_rev
+            # O índice m+i em psi_rev corresponde à raiz necessária nesta etapa
+            s = psi_rev[m + i]
+            # Itera pelos pares dentro dos blocos
+            for j in range(i, n, 2 * m): # Stride é 2*m, começando em i
+                 k = j + m # Índice do par
+                 # Butterfly:
+                 # u = input_list[j]
+                 # v = reduce_inline(input_list[k] * s, bar) # v = a[k] * w
+                 # input_list[j] = (u + v) % q -> u + v if u+v < q else u+v-q
+                 # input_list[k] = (u - v + q) % q -> u - v if u >= v else u - v + q
+
+                 u = input_list[j]
+                 # Calcula v = input_list[k] * s mod q usando Barrett
+                 v = reduce_inline(input_list[k] * s, bar)
+
+                 sum_val = u + v
+                 input_list[j] = sum_val - q if sum_val >= q else sum_val
+
+                 # diff_val = u - v mod q
+                 if u >= v:
+                     input_list[k] = u - v
+                 else:
+                     input_list[k] = u + q - v
+        m *= 2
+
+# ----------------------------------------------------------------------------------------
+# INTT (Inverse Number Theoretic Transform) - Gentleman-Sande Algorithm
+# Espera entrada em ordem BIT-REVERSA, produz saída em ordem NATURAL.
+def intt_generic2(input_list: list[int], psi_inv_rev: list[int], n_inv: int, q: int, bar: Barrett) -> None:
+# def intt_gentleman_sande(input_list: list[int], psi_inv_rev: list[int], n_inv: int, q: int, bar: Barrett) -> None:
+    """
+    Performs INTT using the Gentleman-Sande algorithm (decimation-in-frequency).
+    Modifies 'input_list' in-place.
+    Assumes bit-reversed order input and produces natural order output.
+
+    Args:
+    input_list (list[int]): Polynomial coefficients in NTT domain (bit-reversed order).
+    psi_inv_rev (list[int]): Inverse roots of unity in bit-reversed order.
+    n_inv (int): Modular inverse of n modulo q.
+    q (int): Modulus.
+    bar (Barrett): Barrett reduction object for modulus q.
+    """
+    n = len(input_list)
+    if n < 1 or (n & (n - 1)) != 0:
+        raise ValueError("N must be a power of 2 and >= 1")
+    if n == 1:
+        # Apenas aplica a escala n_inv para n=1
+        if n_inv != 1: # Otimização: não multiplica se n_inv for 1
+             input_list[0] = reduce_inline(input_list[0] * n_inv, bar)
+        return
+
+    t = 1
+    m = n
+    while m > 1:
+        h = m // 2 # h = m/2
+        # Itera pelos diferentes 's' necessários para esta etapa
+        for i in range(h):
+            # Raiz s = (psi^-1)^(bit_rev(i)) para a etapa m/2
+            # O índice h+i em psi_inv_rev corresponde a esta raiz
+            s = psi_inv_rev[h + i]
+            # Itera pelos pares dentro dos blocos
+            for j in range(i, n, m): # Stride é m, começando em i
+                k = j + h # Índice do par
+                # Butterfly:
+                # u = input_list[j]
+                # v = input_list[k]
+                # input_list[j] = (u + v) % q
+                # input_list[k] = ((u - v + q) * s) % q
+
+                u = input_list[j]
+                v = input_list[k]
+
+                sum_val = u + v
+                input_list[j] = sum_val - q if sum_val >= q else sum_val
+
+                # diff_val = (u - v + q) % q
+                if u >= v:
+                    diff_val = u - v
+                else:
+                    diff_val = u + q - v
+
+                # input_list[k] = (diff_val * s) % q usando Barrett
+                input_list[k] = reduce_inline(diff_val * s, bar)
+        # t *= 2 # Não usado no cálculo do índice j diretamente, mas representa o tamanho do bloco atual
+        m //= 2
+
+    # Multiplica todos os coeficientes pelo inverso de n (mod q) no final
+    if n_inv != 1: # Otimização: não multiplica se n_inv for 1
+        for i in range(n):
+            input_list[i] = reduce_inline(input_list[i] * n_inv, bar)
+# ----------------------------------------------------------------------------------------
 # Pointwise multiplication of two polynomials
 def pointwise_mul_inplace2(a: list[int], b: list[int], bar: Barrett) -> None:
     """
@@ -415,6 +592,7 @@ def generate_parameters(n: int, q: int) -> tuple[list[int], list[int], int, Barr
     
     # Calculate the primitive root psi
     psi = find_primitive_root(q, n)
+    #print(f" * * * * * * Primitive root psi = {psi}", " for q =", q)
     
     # Compute the modular inverse of n (n_inv)
     n_inv = modular_inverse(n, q)
@@ -422,6 +600,9 @@ def generate_parameters(n: int, q: int) -> tuple[list[int], list[int], int, Barr
         raise ValueError("Modular inverse of n does not exist for the given q")
     
     # Generates the psi_rev and psi_inv_rev vectors
+    # psi_n_th = pow(psi, 2, q)
+    # psi_rev, psi_inv_rev = generate_psi_vectors(n, q, psi_n_th)
+    
     psi_rev, psi_inv_rev = generate_psi_vectors(n, q, psi)
     
     # Instantiate the Barrett structure for the q module

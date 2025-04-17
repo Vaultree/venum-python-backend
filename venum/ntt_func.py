@@ -343,7 +343,8 @@ def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched:
     
     Returns:
     Cryptogram: Encrypted message.
-    """
+    """    
+    n = len(sk)
     
     #print("Start message: ", msg)
     # verify the cryptography mode batched or not
@@ -354,7 +355,11 @@ def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched:
         intt_generic(msg, psi_inv_rev, n_inv, p1, bar)  
         #print("Batched message: ", msg)
         
-    n = len(sk)
+        # msg = msg.copy()
+        # m0_rev = bit_reverse_order(msg, n)
+        # psi_rev, psi_inv_rev, n_inv, bar = params_batched
+        # intt_generic(m0_rev, psi_inv_rev, n_inv, p1, bar) 
+        # msg = m0_rev 
     
     # collect the parameters
     psi_rev, psi_inv_rev, n_inv, bar = params
@@ -418,11 +423,19 @@ def decrypt(sk: list[int], crypto: Cryptogram, p1: int, params: tuple[list[int],
     if crypto.batched:
         #print("Batched message antes - decifragem: ", ret)
         psi_rev, psi_inv_rev, n_inv, bar = params_batched
-        ntt_generic(ret, psi_inv_rev, p1, bar) 
-        ret = ret[::-1]
+        ntt_generic(ret, psi_rev, p1, bar) 
         #print("Batched message depois - decifragem: ", ret)
         return ret
 
+        # poly_decrypted = ret.copy() # Fazer cópia se 'ret' for usado depois
+        # psi_rev, psi_inv_rev, n_inv, bar = params_batched
+        # # v_rev conterá as avaliações em ordem BIT-REVERSA após a chamada
+        # v_rev = poly_decrypted # Usar poly_decrypted como buffer in-place
+        # ntt_generic(v_rev, psi_rev, p1, bar) # CORRIGIDO: Usar psi_rev para NTT
+        # # Agora 'v_rev' está em ordem bit-reversa. Aplicar bit_reverse_order para obter ordem natural.
+        # final_vector_natural = bit_reverse_order(v_rev, n)
+        # return final_vector_natural
+        
     return ret
 # ------------------------------------------------------------------------------
 # function encrypt pk

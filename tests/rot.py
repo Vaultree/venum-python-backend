@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 16
+    n = 8
     # q = 776077649
     # p1 = 17
     p2 = 3
@@ -29,8 +29,12 @@ def test_scheme_rotation(input):
         p1 = generate_modulus(2**7,2**20,n)
         if p1 % 4 == 1:
             break    
+        
+    q = 65537
+    p1 = 17
     
     print("P1 = ", p1)
+    print("N = ", n)
 
     # verify if p1 is equal to 1 mod 2n (necessary condition for CRT)
     if p1 % (2*n) != 1:
@@ -39,10 +43,12 @@ def test_scheme_rotation(input):
     
     # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
     psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, q)
+    #print("Q [psi_rev] = ",psi_rev)
     params = (psi_rev, psi_inv_rev, n_inv, bar)
     
     # To use batched mode it is necessary to calculate psi_rev, psi_inv_rev, n_inv and bar for module p1
     psi_rev, psi_inv_rev, n_inv, bar = generate_parameters(n, p1)
+    #print("p1 [psi_rev] = ",psi_rev)
     params_batched = (psi_rev, psi_inv_rev, n_inv, bar)
         
     # Generate the keys
@@ -58,6 +64,11 @@ def test_scheme_rotation(input):
             m0.append(ct+1)
     print("Plaintext: ", m0)
     
+    # m1 = m0.copy()
+    # m2 = bit_reverse_order(m1, n)
+    # m3 = bit_reverse_order(m2, n)
+    # print("m1 | m3", m1, m3)
+    
     #print("Parameters: ", params)
     #print("Parameters batched: ", params_batched)
     
@@ -69,12 +80,14 @@ def test_scheme_rotation(input):
     print("Decrypted (c0): ", decrypted)
     print("-" * 80)
     
+    assert decrypted == m0
+    
     map = []
     pot = 3
     
     primes_list = primes(n)
-    primes_list = [5]
-    print("Primes: ", primes)
+    # primes_list = [5]
+    print("Primes: ", primes_list)
 
     separator = 60
     start = False
@@ -97,6 +110,7 @@ def test_scheme_rotation(input):
             # generate new Cryptogram
             body = c0.body
             mask = c0.mask
+            
             body = rotate_polynomial_coeffs(body, rotation, n,q)
             mask = rotate_polynomial_coeffs(mask, rotation, n,q)
             
@@ -128,6 +142,40 @@ def test_scheme_rotation(input):
         print("Power =", ct[0], "| Rotation =", ct[1], "| Decrypted = ", ct[2])
         print("-" * separator)
     print("Map size: ", len(map))
+    
+        # --------------------------------------------------------------------
+    # Mapeamento de rotações cíclicas reais para d ∈ Z*_2N
+    print("\n" + "="*separator)
+    print("MAPEANDO ROTAÇÕES CÍCLICAS EM FUNÇÃO DE AUTOMORFISMOS d ∈ Z*_{})".format(2*n))
+    print("="*separator)
+
+    Z_star = [d for d in range(1, 2*n, 2) if math.gcd(d, 2*n) == 1]
+    print("Automorfismos válidos (Z*_{}) = {}".format(2*n, Z_star))
+
+    rotacao_para_d = {}
+
+    for d in Z_star:
+        sk_rot = rotate_polynomial_coeffs(sk.copy(), d, n, q)
+        body   = rotate_polynomial_coeffs(c0.body, d, n, q)
+        mask   = rotate_polynomial_coeffs(c0.mask, d, n, q)
+
+        c1 = Cryptogram(body=body, mask=mask, batched=c0.batched, q=c0.q)
+        decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
+
+        for i in range(n):
+            esperado = m0[i:] + m0[:i]  # rotação à esquerda de i
+            if decrypted == esperado:
+                rotacao_para_d[i] = d
+                print(f"✅ Rotação de {i} posição(ões) = automorfismo d = {d}")
+                break
+
+    print("\n" + "-"*separator)
+    print("TABELA: ROTACAO CÍCLICA (i) → AUTOMORFISMO d")
+    print("-"*separator)
+    for i in sorted(rotacao_para_d.keys()):
+        print(f"Rotação {i:2d} → d = {rotacao_para_d[i]}")
+    print("-"*separator)
+
 
 # -----------------------------------------------------------------------
 # function to rotate the coefficients
