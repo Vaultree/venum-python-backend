@@ -189,7 +189,7 @@ def encode_msg_crt(msg: List[int], n: int, p1: int, p2: int) -> list[int]:
     
     # ruído zero para testes
     #print("Noise zero para testes.............")
-    #noise_vector = [0] * n
+    # noise_vector = [0] * n
     
     noise_vector = generate_random_vector(n, 0, p2-1)
     message = []
@@ -678,39 +678,28 @@ def product(cripto0: Cryptogram, cripto1: Cryptogram, params: tuple[list[int], l
 # ----------------------------------------------------------------------------------
 def decompose_poly_list(poly: list[int], base: int, q: int) -> list[list[int]]:
     """
-    Decompõe um polinômio (representado como uma lista de inteiros) em uma soma de polinômios,
-    onde os coeficientes de cada polinômio componente são os dígitos da representação
-    dos coeficientes do polinômio original na base 'base'. A operação trabalha em GF(modulo).
+    Decompõe um polinômio (lista de coeficientes) na base `base`, em GF(q).
 
-    Cada polinômio é representado como uma lista de inteiros, onde o i-ésimo elemento é o coeficiente de x^i.
-    Assim, para cada i temos:
-    
-        poly[i] = components[0][i] + components[1][i]*base + components[2][i]*base^2 + ... + components[num_components-1][i]*base^(num_components-1)
-    
-    Parâmetros:
-      poly          : list[int]
-                      Polinômio de entrada (coeficiente de x^i é poly[i]).
-      base          : int
-                      Base usada para decomposição (por exemplo, 2 para binário ou 10 para decimal).
-      num_components: int
-                      Número de dígitos/componentes a serem extraídos.
-      modulo        : int
-                      Módulo usado para trabalhar em GF(modulo). Os coeficientes são reduzidos módulo 'modulo'.
-    
-    Retorna:
-      Uma lista de listas de inteiros, onde o j-ésimo elemento (0 ≤ j < num_components) é o polinômio
-      componente correspondente ao dígito extraído para a potência base^j.
-    
-    Lança:
-      ValueError: Se algum coeficiente do polinômio requer mais dígitos do que 'num_components'.
+    Args:
+        poly: lista de inteiros, coeficiente de x^i em poly[i].
+        base: inteiro ≥ 2, base da decomposição.
+        q:    inteiro > 0, módulo para redução dos coeficientes.
+    Returns:
+        Lista de `num_components` polinômios (cada um lista de comprimento n),
+        onde num_components = ceil(log_base(q)).
     """
+    ...
     # Reduz os coeficientes do polinômio no corpo GF(modulo)
     poly_mod = [c % q for c in poly]
     n = len(poly_mod)
     
     # Inicializa num_components listas, cada uma com n coeficientes (um para cada termo do polinômio)
-    num_components = math.log(q, base)
-    num_components = math.ceil(num_components)
+    # num_components = math.log(q, base)
+    # num_components = math.ceil(num_components)
+    
+    num_components = 0
+    while base**num_components < q:
+        num_components += 1
     
     components = [[0] * n for _ in range(num_components)]
     
