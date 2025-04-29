@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 8
+    n = 4
     # q = 776077649
     p1 = 17
     p2 = 3
@@ -25,10 +25,10 @@ def test_scheme_rotation(input):
     q = generate_modulus(2**60,2**63,n)
     print(" Q = ", q)
     
-    # while True:
-    #     p1 = generate_modulus(2**7,2**12,n)
-    #     if p1 % 4 == 1:
-    #         break    
+    while True:
+        p1 = generate_modulus(2**7,2**20,n)
+        if p1 % 4 == 1:
+            break    
         
     # q = 65537
     # p1 = 17
@@ -70,11 +70,11 @@ def test_scheme_rotation(input):
         m0.append((ct+1)* 1)
         
     r1 = encode_input(m0, n, p1)
-    r2 = decode_input(r1, p1)
+    r2 = decode_input(r1, n, p1)
     assert m0 == r2
             
     # m0 = [4, 1, 2, 3, 8, 5, 6, 7]
-    # m0 = [10,20,30,40,50,60,70,80]
+    # m0 = [16,15,14,13,12,11,10,9]
     # m0 = [1,1,1,1,1,1,1,1]
     print("Plaintext: ", m0)
     
@@ -91,7 +91,7 @@ def test_scheme_rotation(input):
     print("C0: ", c0)
     
     decrypted = decrypt(sk, c0, p1, params, params_batched)
-    decrypted = decode_input(decrypted, p1)            
+    decrypted = decode_input(decrypted, n, p1)            
     print("Decrypted (c0): ", decrypted)
     print("-" * 80)
     
@@ -114,7 +114,7 @@ def test_scheme_rotation(input):
     # root_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
     print("root: ", root_list)
     
-    root_list = [5]
+    # root_list = [1, 3, 5, 7]
     # start, end = -4*n, 4*n+1
     # cria uma lista de inteiros de start até end, inclusive
     # rot_vetor = list(range(start, end+1))
@@ -151,10 +151,6 @@ def test_scheme_rotation(input):
                 # key rotation
                 sk_rot = rotate_polynomial_coeffs(sk, rotation, n,q)
                 
-                # sk_rot = rotate_polynomial_coeffs(sk, -1, n,q)
-                # sk_rot = rotate_polynomial_coeffs(sk_rot, 3, n,q)
-                # sk_rot = rotate_polynomial_coeffs(sk_rot, -1, n,q)
-                
                 print("-" * 80)
                 print("Rotation......: ", rot)
                 print("sk............: ", sk)   
@@ -186,21 +182,18 @@ def test_scheme_rotation(input):
                 
                 c1 = rotate_ciphertext(c0, rotation, n, q)
                 
-                # c1 = rotate_ciphertext(c0, -1, n, q)
-                # c1 = rotate_ciphertext(c1, 3, n, q)
-                # c1 = rotate_ciphertext(c1, -1, n, q)
                 #print("C1: ", c1)
                 
                 # decrypted new Cryptogram with the new secret key (rotated)
                 
                 decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
-                decrypted = decode_input(decrypted, p1)
+                decrypted = decode_input(decrypted, n, p1)
                 print("Decrypted (c1).: ", decrypted)
                 # print("-" * separator)
                 
                 if contains_vector(map_rot_test, decrypted) == False:
                     map_rot_test.append(decrypted)
-                    map_indice.append(rotation)
+                    map_indice.append([[power, rot],[rotation]])
                 
                 continue
                 # print("-" * separator)
@@ -317,18 +310,23 @@ def test_scheme_rotation(input):
 
     print("Rotações verificadas: ")
     posic = 0
+    total = 0
     for ct in map_rot_test:
         if contains_message(ct, m0) == True:
             print(map_indice[posic],": ",ct) 
+            total+=1
         posic +=1
+    
+    print("Map size: ", total)
+    print("P1 = ", p1, " | P2 = ", p2, " | Q = ", q)
                 
-    # Show the results
-    print("roots: ", root_list)
-    for ct in map:
-        print("Power = ", pad_num(ct[0],3), "| Rot = ", pad_num(ct[1],3),"| Rotation = ", pad_num(ct[2],8) ,"| Decrypted = ", ct[3])
-        # print(ct[3])
-        # print("-" * separator)
-    print("Map size: ", len(map))
+    # # Show the results
+    # print("roots: ", root_list)
+    # for ct in map:
+    #     print("Power = ", pad_num(ct[0],3), "| Rot = ", pad_num(ct[1],3),"| Rotation = ", pad_num(ct[2],8) ,"| Decrypted = ", ct[3])
+    #     # print(ct[3])
+    #     # print("-" * separator)
+    # print("Map size: ", len(map))
     
     # t = 17
     # raiz = 3
@@ -978,29 +976,33 @@ def encode_input(input, n, t):
     n_inv = modular_inverse(n, t)
 
     # Matriz W_hat da página 148/149
-    W_hat = [
-        [ 1,  1,  1,  1,  1,  1,  1,  1],
-        [12, 14,  5,  3, 10, 11,  7,  6],
-        [ 8,  9,  8,  9, 15,  2, 15,  2],
-        [11,  7,  6, 10, 14,  5,  3, 12],
-        [13, 13, 13, 13,  4,  4,  4,  4],
-        [ 3, 12, 14,  5,  6, 10, 11,  7],
-        [ 2, 15,  2, 15,  9,  8,  9,  8],
-        [ 7,  6, 10, 11,  5,  3, 12, 14]
-    ]
+    # W_hat = [
+    #     [ 1,  1,  1,  1,  1,  1,  1,  1],
+    #     [12, 14,  5,  3, 10, 11,  7,  6],
+    #     [ 8,  9,  8,  9, 15,  2, 15,  2],
+    #     [11,  7,  6, 10, 14,  5,  3, 12],
+    #     [13, 13, 13, 13,  4,  4,  4,  4],
+    #     [ 3, 12, 14,  5,  6, 10, 11,  7],
+    #     [ 2, 15,  2, 15,  9,  8,  9,  8],
+    #     [ 7,  6, 10, 11,  5,  3, 12, 14]
+    # ]
+    
+    d = find_primitive_root(t, n)
+    W_hat = generate_w_generalized(d, 5, n, t)
+    # W_hat = generate_w(d, 5, n, t)
 
     # Matriz Identidade Reversa I_R para n=8
-    IR = [
-        [0, 0, 0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0],
-        [0, 0, 0, 1, 0, 0, 0, 0],
-        [0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0, 0, 0, 0]
-    ]
-
+    # IR = [
+    #     [0, 0, 0, 0, 0, 0, 0, 1],
+    #     [0, 0, 0, 0, 0, 0, 1, 0],
+    #     [0, 0, 0, 0, 0, 1, 0, 0],
+    #     [0, 0, 0, 0, 1, 0, 0, 0],
+    #     [0, 0, 0, 1, 0, 0, 0, 0],
+    #     [0, 0, 1, 0, 0, 0, 0, 0],
+    #     [0, 1, 0, 0, 0, 0, 0, 0],
+    #     [1, 0, 0, 0, 0, 0, 0, 0]
+    # ]
+    IR = reverse_identity(n)
 
     # Passo 1: Calcular M_prod = W_hat * IR mod t
     M_prod = multiply_matrices(W_hat, IR, t)
@@ -1014,18 +1016,22 @@ def encode_input(input, n, t):
     return m_encoded
 
 # ----------------------------------------------------------------
-def decode_input(input, t):
+def decode_input(input, n, t):
         # Matriz W_hat_star (mod 17)
-    W_hat_star = [
-        [ 1,  3,  9, 10, 13,  5, 15, 11],
-        [ 1,  5,  8,  6, 13, 14,  2, 10],
-        [ 1, 14,  9,  7, 13, 12, 15,  6],
-        [ 1, 12,  8, 11, 13,  3,  2,  7],
-        [ 1,  6,  2, 12,  4,  7,  8, 14],
-        [ 1,  7, 15,  3,  4, 11,  9, 12],
-        [ 1, 11,  2,  5,  4, 10,  8,  3],
-        [ 1, 10, 15, 14,  4,  6,  9,  5]
-    ]
+    # W_hat_star = [ 
+    #     [ 1,  3,  9, 10, 13,  5, 15, 11],
+    #     [ 1,  5,  8,  6, 13, 14,  2, 10],
+    #     [ 1, 14,  9,  7, 13, 12, 15,  6],
+    #     [ 1, 12,  8, 11, 13,  3,  2,  7],
+    #     [ 1,  6,  2, 12,  4,  7,  8, 14],
+    #     [ 1,  7, 15,  3,  4, 11,  9, 12],
+    #     [ 1, 11,  2,  5,  4, 10,  8,  3],
+    #     [ 1, 10, 15, 14,  4,  6,  9,  5]
+    # ]
+    
+    d = find_primitive_root(t, n)
+    W_hat_star = generate_w_star_generalized(d, 5, n, t)
+    # W_hat_star = generate_w1(d, 5, n, t)
 
     # Calcular v_j3 = W_hat_star * m_j3_raw mod t_mod
     v_j3_decoded = mul_matrix_vector(W_hat_star, input, t)
@@ -1061,3 +1067,129 @@ def contains_message(vet, msg):
             return False
         
     return True
+# -----------------------------------------------------------------------------------------
+def reverse_identity(n):
+    """
+    Gera a matriz identidade reversa (anti-diagonal) de dimensão n × n.
+    Cada elemento (i, j) é 1 se j == n-1-i, caso contrário 0.
+
+    Argumentos:
+        n (int): dimensão da matriz.
+
+    Retorna:
+        list of list: matriz identidade reversa.
+
+    Exemplo:
+        >>> reverse_identity(4)
+        [
+         [0, 0, 0, 1],
+         [0, 0, 1, 0],
+         [0, 1, 0, 0],
+         [1, 0, 0, 0]
+        ]
+    """
+    return [[1 if j == n-1-i else 0 for j in range(n)] for i in range(n)]
+
+# -------------------------------------------------------------------------------
+def generate_w_generalized(root, j_base, n, t):
+    """
+    Gera a matriz W generalizada baseada na estrutura do documento e código do usuário (pág 149).
+    Assume n é potência de 2 > 0. Root é uma raiz mod t. j_base é a base J.
+    """
+    if n <= 0 or (n & (n - 1) != 0):
+        print(f"Error: n must be a power of 2 and positive. n = {n}")
+        raise ValueError(f"n must be a power of 2: {n}")
+
+    two_n = 2 * n
+    w_mat = [[0] * n for _ in range(n)]
+
+    # Row 0 is all 1s
+    w_mat[0] = [1] * n
+
+    # Exponents sequence logic derived from user's generate_w hardcoding for n=8
+    # This pattern looks like j_base**(n/2-1 - k) for k in range(n/2)
+    j_powers_exp = [j_base**(n/2 - 1 - k) for k in range(n//2)]
+    
+    # Combine positive and negative exponents modulo 2n
+    column_base_exp = []
+    for p_exp in j_powers_exp:
+        column_base_exp.append(p_exp % two_n)
+    for n_exp in j_powers_exp:
+        # Use (-(val)) % mod for correct modular arithmetic of negative
+        column_base_exp.append((-n_exp) % two_n)
+
+    # For rows i > 0 and cols j
+    for i in range(1, n):
+        for j in range(n):
+            # The base of the power is the root
+            # The exponent for the root is column_base_exp[j] multiplied by the row index i
+            combined_exp = mod_number(column_base_exp[j] * i, two_n) # Keep intermediate mod 2n as in calculate_J/J*? Paper does this.
+            w_mat[i][j] = pow(int(root), int(combined_exp), int(t)) # Then root ^ exponent mod t
+
+    # # Debugging output
+    # print(f"Generating W for n={n}, t={t}, root={root}, j_base={j_base}")
+    # print("Calculated column_base_exp (mod 2n):", column_base_exp)
+    # w_mat_display = [[mod_number(x, t) for x in row] for row in w_mat]
+    # print("Calculated W (mod t):")
+    # for row in w_mat_display:
+    #     print(row)
+
+
+    return w_mat
+
+# Matrix W* from user's generate_w1 on page 149
+# Structure looks different than W_hat_star visually on same page...
+# Let's trust generate_w1 (USER) to be W*
+
+# ------------------------------------------------------------------------------------------
+def generate_w_star_generalized(root, j_base, n, t):
+    """
+    Gera a matriz W* generalizada baseada na estrutura do documento e código do usuário (pág 149).
+    Assume n é potência de 2 > 0. Root é uma raiz mod t. j_base é a base J.
+    """
+    if n <= 0 or (n & (n - 1) != 0):
+        print(f"Error: n must be a power of 2 and positive. n = {n}")
+        raise ValueError(f"n must be a power of 2: {n}")
+
+    two_n = 2 * n
+    w_star_mat = [[0] * n for _ in range(n)]
+
+    # Element at [i][j] is root raised to some power that depends on j and i
+    # The base of the power is root.
+    # Exponent seems to be j_base^(something index i) multiplied by col j? No element j as exponent here directly.
+    # The element [i][j] is root raised to power that depends on *row index i* and *column index j*.
+    # Pattern in generate_w1 hardcoding for n=8:
+    # For row 'number' in range(n//2) [0..3]: root ^ ( (j_base**number % 2n) * ct=j) mod t
+    # For row 'number' in range(n//2, n) [4..7]: root ^ ( (-(j_base**(number-4)) % 2n) * ct=j) mod t
+
+    # Generalized indices:
+    # Row index i (0 <= i < n/2): h_index = i
+    # Row index i (n/2 <= i < n): h_index = i - n/2
+    # J/J* powers derived from h_index
+    row_exp_bases_j = [j_base**i for i in range(n//2)]
+    row_exp_bases_j_star = [-(j_base**i) for i in range(n//2)]
+
+    for i in range(n):
+        for j in range(n):
+            if i < n//2:
+                # Power = (j_base**i mod 2n) * j
+                h_index = i
+                base_for_exp = mod_number(row_exp_bases_j[h_index], two_n) # j_base^h_index mod 2n
+                final_exp = mod_number(base_for_exp * j, two_n) # base * col_idx mod 2n
+            else:
+                # Power = (-(j_base**(i-n//2)) mod 2n) * j
+                h_index = i - n//2
+                base_for_exp = mod_number(row_exp_bases_j_star[h_index], two_n) # -(j_base^h_index) mod 2n
+                final_exp = mod_number(base_for_exp * j, two_n) # base * col_idx mod 2n
+            
+            w_star_mat[i][j] = pow(int(root), int(final_exp), int(t))
+
+    # # Debugging output
+    # print(f"Generating W* for n={n}, t={t}, root={root}, j_base={j_base}")
+    # w_star_mat_display = [[mod_number(x, t) for x in row] for row in w_star_mat]
+    # print("Calculated W* (mod t):")
+    # for row in w_star_mat_display:
+    #     print(row)
+
+
+    return w_star_mat
