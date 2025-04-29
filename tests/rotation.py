@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 8
+    n = 4
     # q = 776077649
     p1 = 17
     p2 = 3
@@ -417,7 +417,7 @@ def test_scheme_rotation(input):
 # ---------------------------------------------------------------------------------------------
 def rotate_ciphertext(ct, d, n, q):
     """
-    Rotates a ciphertext in the coefficient domain for automorphism x -> x^d mod (x^n+1).
+    Rotaciona um ciphertext no domínio de coeficientes para automorfismo x -> x^d mod (x^n+1).
     """
     new_mask = rotate_polynomial_coeffs(ct.mask, d, n, q)
     new_body = rotate_polynomial_coeffs(ct.body, d, n, q)
@@ -560,18 +560,19 @@ def key_switching(ksk: list, base_decomposition: int, cryptogram, params):
 # -----------------------------------------------------------------------
 def rotate_polynomial_coeffs(coeffs, d, N, q):
     """
-    Applies the automorphism x -> x^d mod (x^N + 1) to the polynomial given
-    by the coefficients `coeffs`, of length N, in Z_q.
-    Returns the rotated coefficient vector with the correct signs.
+    Aplica o automorfismo x -> x^d mod (x^N + 1) no polinômio dado
+    pelos coeficientes `coeffs`, de comprimento N, em Z_q.
+    Devolve o vetor de coeficientes rotacionado com os sinais corretos.
     """
     rotated = [0] * N
     for i in range(N):
-        # index into the resulting polynomial
+        # índice no polinômio resultante
         j = (i * d) % N
-        # how many times did you "overtake" N to determine the sign
+        # quantas vezes "ultrapassou" N para determinar o sinal
         k = (i * d) // N
         sign = -1 if (k % 2) else 1
-        # apply mod that (use its mod number function or %q directly)
+        #sign = 1
+        # aplica mod q (use sua função mod_number ou %q direto)
         rotated[j] = (coeffs[i] * sign) % q
     return rotated
 # -----------------------------------------------------------------------
