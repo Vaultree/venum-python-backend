@@ -318,7 +318,7 @@ def test_scheme_rotation(input):
     print("Rotações verificadas: ")
     posic = 0
     for ct in map_rot_test:
-        if posic % 2 != 0:
+        if contains_message(ct, m0) == True:
             print(map_indice[posic],": ",ct) 
         posic +=1
                 
@@ -1049,3 +1049,15 @@ def contains_vector(vectors, target):
         contains_vector(vectors, [3,4])  # True
     """
     return target in vectors
+
+# -----------------------------------------------------------------------------------------
+def contains_message(vet, msg):    
+
+    n = len(msg)
+    for ct in range(n):
+        if msg[ct] in vet:
+            continue
+        else:
+            return False
+        
+    return True
