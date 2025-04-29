@@ -17,7 +17,7 @@ def test_scheme_rotation(input):
     # parameters:
     n = 8
     # q = 776077649
-    # p1 = 17
+    p1 = 17
     p2 = 3
     base_decomposition = 2  
     batched = True
@@ -25,10 +25,10 @@ def test_scheme_rotation(input):
     q = generate_modulus(2**60,2**63,n)
     print(" Q = ", q)
     
-    while True:
-        p1 = generate_modulus(2**7,2**10,n)
-        if p1 % 4 == 1:
-            break    
+    # while True:
+    #     p1 = generate_modulus(2**7,2**12,n)
+    #     if p1 % 4 == 1:
+    #         break    
         
     # q = 65537
     # p1 = 17
@@ -39,6 +39,10 @@ def test_scheme_rotation(input):
     # verify if p1 is equal to 1 mod 2n (necessary condition for CRT)
     if p1 % (2*n) != 1:
         print("Error: p1 must be equal to 1 mod 2n | n = ",n, "p1 mod 2n", p1 % (2*n))
+        sys.exit(1)
+
+    if p1 % 4 != 1:
+        print("Error: p1 must be equal to 1 mod 4!")
         sys.exit(1)
     
     # Generate the required parameters (vectors psi_rev, psi_inv_rev, n_inv and the Barrett structure)
@@ -55,6 +59,8 @@ def test_scheme_rotation(input):
     sk = create_sk(n, 0, 1, q)
     print("Secret key: ", sk)
     
+    # sk = [1,0,0,0,0,0,0,0]
+    
     pk = generate_pk(sk, q, p1, p2, params)
     rlk = generate_rlk(sk, base_decomposition, p1, p2, q, params)
     
@@ -62,8 +68,13 @@ def test_scheme_rotation(input):
     m0 = []
     for ct in range(n):
         m0.append((ct+1)* 1)
+        
+    r1 = encode_input(m0, n, p1)
+    r2 = decode_input(r1, p1)
+    assert m0 == r2
             
-    # m0 = [2,3,1,4,7,6,8,5]
+    # m0 = [4, 1, 2, 3, 8, 5, 6, 7]
+    # m0 = [10,20,30,40,50,60,70,80]
     # m0 = [1,1,1,1,1,1,1,1]
     print("Plaintext: ", m0)
     
@@ -76,12 +87,15 @@ def test_scheme_rotation(input):
     #print("Parameters batched: ", params_batched)
     
     # Encrypt the plaintexts secret key
-    c0 = encrypt_sk(sk, m0, q, p1, p2, batched, params, params_batched)
+    c0 = encrypt_sk(sk, encode_input(m0,n,p1), q, p1, p2, batched, params, params_batched)
     print("C0: ", c0)
     
     decrypted = decrypt(sk, c0, p1, params, params_batched)
+    decrypted = decode_input(decrypted, p1)            
     print("Decrypted (c0): ", decrypted)
     print("-" * 80)
+    
+    #sys.exit(0)
 
     print("C0: ", c0)
     
@@ -96,90 +110,217 @@ def test_scheme_rotation(input):
     print("Automorfismos válidos (Z*_{}) = {}".format(2*n, Z_star))
 
     root_list = Z_star
-    # root_list = [5]
+    root_list = [5]
     # root_list = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
     print("root: ", root_list)
+    
+    root_list = [5]
+    # start, end = -4*n, 4*n+1
+    # cria uma lista de inteiros de start até end, inclusive
+    # rot_vetor = list(range(start, end+1))
+    
+    map_rot_test = []
+    map_indice = []
     
     separator = 60
     start = False
     for pot in root_list:
-        for rot in range(n):
-            # at this point we have explored all possible rotations
-            
-            if rot < (n/2):
-                power = pot
-                rotation = power**rot  
-            else:
-                power = -pot
-                rotation = power**rot
-                    
-            # key rotation
-            sk_rot = rotate_polynomial_coeffs(sk, rotation, n,q)
-            
-            print("Rotation......: ", rot)
-            print("sk............: ", sk)   
-            # 2) só para exibí-la de forma humana, use uma cópia!
-            signed = view_sk_rot(sk_rot.copy(), q)
-            print("sk_rot (signed):", signed)
-            print("P1 = ", p1, "P2 = ", p2)
-            
-            # generate rotation key
-            ksk = generate_ks_keys(sk_rot, sk, base_decomposition, q, p1, p2, batched, params, params_batched)
-            # print("KSK: ", ksk)
-            # print(">>> len(ksk) esperado:", ceil_log(q, base_decomposition))
-            # print(">>> len(ksk) obtido   :", len(ksk))
-            # for idx, ck in enumerate(ksk):
-            #     print(f"  ksk[{idx}].mask[:5] = {ck.mask[:5]}")
-            #     print(f"  ksk[{idx}].body[:5] = {ck.body[:5]}")
-            
-            # generate new Cryptogram
-            body = c0.body
-            mask = c0.mask
-            
-            body = rotate_polynomial_coeffs(body, rotation, n,q)
-            mask = rotate_polynomial_coeffs(mask, rotation, n,q)
-            
-            c1 = Cryptogram(body=body, mask=mask, batched=c0.batched, q=c0.q)
-            #print("C1: ", c1)
-            
-            # decrypted new Cryptogram with the new secret key (rotated)
-            
-            decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
-            # print("Decrypted (c1).: ", decrypted)
-            # print("-" * separator)
+        for signal in [0,1]:
+            for rot in range(2*n):
+            # for rot in rot_vetor:
+                batched = True
+                
+                # at this point we have explored all possible rotations
+                
+                # if rot < (n/2):
+                #     power = pot
+                #     rotation = power**rot  
+                # else:
+                #     power = -pot
+                #     rotation = power**rot
 
-            c2 = key_switching(ksk, base_decomposition, c1, params)
-            decrypted_2 = decrypt(sk, c2, p1, params, params_batched)
-            
-            print("Decrypted (c1).: ", decrypted)
-            print("Decrypted (c2).: ", decrypted_2)
-            
-            # ------------------------------------------------------
-            # testando a mudança para a mesma chave:
-            ksk = generate_ks_keys(sk, sk, base_decomposition, q, p1, p2, batched, params, params_batched)
-            c3 = key_switching(ksk, base_decomposition, c0, params)
-            decrypted_3 = decrypt(sk, c3, p1, params, params_batched)
-            decrypted_0 = decrypt(sk, c0, p1, params, params_batched)
-            print("Decrypted (c3).: ", decrypted_3)
-            print("Decrypted (c0).: ", decrypted_0)
-            print("-" * separator)
-            
-            # sys.exit(0)
-                        
-            # verify if the decrypted number is equal to the original plaintext
-            # and if the rotation is correct
-            if verify_number(decrypted, m0) == True:
-                if start == True:
-                    verify = 0
-                    for ct in map:
-                        if decrypted != ct[3]:
-                            verify  += 1                     
-                    
-                    if verify == len(map):        
-                        map.append([power, rot, rotation, decrypted])
+                if signal == 0:
+                    power = pot
+                    rotation = power**rot  
                 else:
-                    map.append([power, rot, rotation, decrypted])
-                    start = True
+                    power = -pot
+                    rotation = power**rot
+                    
+                rotation = rot
+                        
+                # key rotation
+                sk_rot = rotate_polynomial_coeffs(sk, rotation, n,q)
+                
+                # sk_rot = rotate_polynomial_coeffs(sk, -1, n,q)
+                # sk_rot = rotate_polynomial_coeffs(sk_rot, 3, n,q)
+                # sk_rot = rotate_polynomial_coeffs(sk_rot, -1, n,q)
+                
+                print("-" * 80)
+                print("Rotation......: ", rot)
+                print("sk............: ", sk)   
+                # 2) só para exibí-la de forma humana, use uma cópia!
+                signed = view_sk_rot(sk_rot.copy(), q)
+                print("sk_rot (signed):", signed)
+                print("P1 = ", p1, " | P2 = ", p2, " | Q = ", q)
+                
+                # generate rotation key
+                ksk = generate_ks_keys(sk_rot, sk, base_decomposition, q, p1, p2, batched, params, params_batched)
+                
+                # para multiplicar os criptogramas com a chave sk_rot é necessário gerar as chaves
+                # de relinearização.
+                rlk_sk_rot = generate_rlk(sk_rot, base_decomposition, p1, p2, q, params)
+                
+                # print("KSK: ", ksk)
+                # print(">>> len(ksk) esperado:", ceil_log(q, base_decomposition))
+                # print(">>> len(ksk) obtido   :", len(ksk))
+                # for idx, ck in enumerate(ksk):
+                #     print(f"  ksk[{idx}].mask[:5] = {ck.mask[:5]}")
+                #     print(f"  ksk[{idx}].body[:5] = {ck.body[:5]}")
+                
+                #generate new Cryptogram
+                # body = c0.body
+                # mask = c0.mask
+                # body = rotate_polynomial_coeffs(body, rotation, n,q)
+                # mask = rotate_polynomial_coeffs(mask, rotation, n,q)
+                # c1 = Cryptogram(body=body, mask=mask, batched=c0.batched, q=c0.q)
+                
+                c1 = rotate_ciphertext(c0, rotation, n, q)
+                
+                # c1 = rotate_ciphertext(c0, -1, n, q)
+                # c1 = rotate_ciphertext(c1, 3, n, q)
+                # c1 = rotate_ciphertext(c1, -1, n, q)
+                #print("C1: ", c1)
+                
+                # decrypted new Cryptogram with the new secret key (rotated)
+                
+                decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
+                decrypted = decode_input(decrypted, p1)
+                print("Decrypted (c1).: ", decrypted)
+                # print("-" * separator)
+                
+                if contains_vector(map_rot_test, decrypted) == False:
+                    map_rot_test.append(decrypted)
+                    map_indice.append(rotation)
+                
+                continue
+                # print("-" * separator)
+                
+                c2 = key_switching(ksk, base_decomposition, c1, params)
+                decrypted_2 = decrypt(sk, c2, p1, params, params_batched)
+                
+                decrypted_sk = decrypt(sk, c1, p1, params, params_batched)
+                
+                print("Decrypted with sk_rot (c1)...: ", decrypted)
+                print("Decrypted with sk     (c1)...: ", decrypted_sk)
+                print("Decrypted key_switching (c2).: ", decrypted_2)
+
+                # testar mascara multiplicativa            
+                c_mul = encrypt_sk(sk_rot, [1,0,0,0,0,0,0,0], q, p1, p2, batched, params, params_batched)
+                decrypted_cmul = decrypt(sk_rot, c_mul, p1, params, params_batched)
+                print("Decrypted (c_mul with sk_rot).: ", decrypted_cmul)
+                
+                c1_sk_rot = encrypt_sk(sk_rot, [-8,-7,-6,-5,-4,-3,-2,-1], q, p1, p2, batched, params, params_batched)
+                c_sum = sum_cryptograms(c1, c1_sk_rot)
+                c_sum_dec = decrypt(sk_rot, c_sum, p1, params, params_batched)
+                print("Decrypted (c1 + c1_sk_rot = 0).: ", c_sum_dec)
+                
+                print("-" * 60)
+                c_mul = encrypt_sk(sk_rot, [1,0,0,0,0,0,0,0], q, p1, p2, batched, params, params_batched)
+                print("sk_rot: ", sk_rot)
+                decrypted_c1 = decrypt(sk_rot, c1, p1, params, params_batched)
+                print("Decrypted (c1 with sk_rot).: ", decrypted_c1)
+                c4 = multiply_cryptograms(c1, c_mul, rlk_sk_rot, base_decomposition, params)
+                decrypted_c4 = decrypt(sk_rot, c4, p1, params, params_batched)
+                print("Decrypted with (c4 = c1 * c_mul).: ", decrypted_c4)
+                
+                print("-" * 60)
+                # verificando se a multiplicação é correta
+                c_mul = encrypt_sk(sk_rot, [1,0,0,0,0,0,0,0], q, p1, p2, batched, params, params_batched)
+                c8_sk_rot = encrypt_sk(sk_rot, [8,7,6,5,4,3,2,1], q, p1, p2, batched, params, params_batched)
+                assert [8,7,6,5,4,3,2,1] == decrypt(sk_rot, c8_sk_rot, p1, params, params_batched)
+                c8 = multiply_cryptograms(c8_sk_rot, c_mul, rlk_sk_rot, base_decomposition, params)
+                decrypted_c8 = decrypt(sk_rot, c8, p1, params, params_batched)
+                print("Decrypted with (c8 = c8 * c_mul).: ", decrypted_c8)
+
+                print("-" * 60)
+                # verificando se a multiplicação é correta (plaintext)
+                # Necessária codificação batched porque o criptograma está cifrado no modo batched
+                # (parametros relativos a p1)
+                (psi_rev, psi_inv_rev, n_inv, bar) = params_batched
+                c_mul = [1,0,0,0,0,0,0,0]
+                intt_generic(c_mul, psi_inv_rev, n_inv, p1, bar)
+                
+                c8_sk_rot = encrypt_sk(sk_rot, [8,7,6,5,4,3,2,1], q, p1, p2, batched, params, params_batched)
+                assert [8,7,6,5,4,3,2,1] == decrypt(sk_rot, c8_sk_rot, p1, params, params_batched)
+            
+                # Cuidado ao passar os parametros para o criptograma (são parametros relativos a q)
+                (psi_rev, psi_inv_rev, n_inv, bar) = params
+                body = polymul_ntt(c8_sk_rot.body, c_mul.copy(), q, psi_rev, psi_inv_rev, n_inv, bar)
+                mask = polymul_ntt(c8_sk_rot.mask, c_mul.copy(), q, psi_rev, psi_inv_rev, n_inv, bar)
+                
+                c9 = Cryptogram(body=body, mask=mask, batched=c8_sk_rot.batched, q=c8_sk_rot.q)        
+                decrypted_c9 = decrypt(sk_rot, c9, p1, params, params_batched)
+                print("Decrypted with (c9 = c9 * c_mul).: ", decrypted_c9)
+                
+                assert decrypted_c9 == [8,0,0,0,0,0,0,0]
+                
+                
+                print("-" * 60)
+                c_mul = encrypt_sk(sk, [1,0,0,0,0,0,0,0], q, p1, p2, batched, params, params_batched)
+                decrypted_cmul = decrypt(sk, c_mul, p1, params, params_batched)
+                print("Decrypted (c_mul).: ", decrypted_cmul)
+                print("Decrypted c0: ", decrypt(sk, c0, p1, params, params_batched))
+                c5 = multiply_cryptograms(c0, c_mul, rlk, base_decomposition, params)
+                decrypted_c5 = decrypt(sk, c5, p1, params, params_batched)
+                print("Decrypted with (c5 = c0 * c_mul).: ", decrypted_c5)
+                
+                print("=" * 90)
+                
+                sum4 = 0
+                sum5 = 0
+                for ct in range(n):
+                    sum4 = mod_number(sum4 + decrypted_c4[ct], q)
+                    sum5 = mod_number(sum5 + decrypted_c5[ct], q)   
+                    
+                if sum5 != m0[0]:
+                    print("Error: ", sum5)            
+                    #continue
+
+                if sum4 != decrypted[0]:
+                    print("Error: ", sum4)            
+                    #continue
+                
+                # ------------------------------------------------------
+                # Testa Key Switching identidade
+                # ksk_identity = generate_ks_keys(sk, sk, base_decomposition, q, p1, p2, batched, params, params_batched)
+                # c3 = key_switching(ksk_identity, base_decomposition, c0, params)
+                # dec3 = decrypt(sk, c3, p1, params, params_batched)
+                # dec0 = decrypt(sk, c0, p1, params, params_batched)
+                # assert dec3 == dec0, "Key switching identidade falhou!"
+                
+                # sys.exit(0)
+                            
+                # verify if the decrypted number is equal to the original plaintext
+                # and if the rotation is correct
+                if verify_number(decrypted, m0) == True:
+                    if start == True:
+                        verify = 0
+                        for ct in map:
+                            if decrypted != ct[3]:
+                                verify  += 1                     
+                        
+                        if verify == len(map):        
+                            map.append([power, rot, rotation, decrypted])
+                    else:
+                        map.append([power, rot, rotation, decrypted])
+                        start = True
+
+    print("Rotações verificadas: ")
+    posic = 0
+    for ct in map_rot_test:
+        if posic % 2 != 0:
+            print(map_indice[posic],": ",ct) 
+        posic +=1
                 
     # Show the results
     print("roots: ", root_list)
@@ -189,44 +330,44 @@ def test_scheme_rotation(input):
         # print("-" * separator)
     print("Map size: ", len(map))
     
-    t = 17
-    raiz = 3
-    pot = 5
+    # t = 17
+    # raiz = 3
+    # pot = 5
     
-    print("*" * separator)
-    w = generate_w(raiz, pot, 8, t)
+    # print("*" * separator)
+    # w = generate_w(raiz, pot, 8, t)
     
-    print("*" * separator)
-    w1 = generate_w1(raiz, pot, 8, t)
+    # print("*" * separator)
+    # w1 = generate_w1(raiz, pot, 8, t)
     
-    print("*" * separator)
-    d = multiply_matrices(w1, w, t)
-    print("Resultado: ")
+    # print("*" * separator)
+    # d = multiply_matrices(w1, w, t)
+    # print("Resultado: ")
     
-    mat_i = d.copy()
+    # mat_i = d.copy()
     
-    for ct in d:
-        print(ct)
+    # for ct in d:
+    #     print(ct)
 
-    # n−1Wˆ · IRn
-    modinv = modular_inverse(8//2,t)
-    # modinv = 13
+    # # n−1Wˆ · IRn
+    # modinv = modular_inverse(8//2,t)
+    # modinv = 15
     
-    m1 = mult_number_matrix(modinv, w, t)
-    print("*" * separator)
-    print("modinv: ", modinv)
-    print("Resultado: ")
+    # m1 = mult_number_matrix(modinv, w, t)
+    # print("*" * separator)
+    # print("modinv: ", modinv)
+    # print("Resultado: ")
         
-    m2 = multiply_matrices(m1, d.copy(), t)
+    # m2 = multiply_matrices(m1, d.copy(), t)
         
-    m3 = mul_matrix_vector(m2, [1,2,3,4,5,6,7,8], t)
+    # m3 = mul_matrix_vector(m2, [1,2,3,4,5,6,7,8], t)
 
-    print("Resultado [m3]: ", m3)
-    print("*" * separator)
+    # print("Resultado [m3]: ", m3)
+    # print("*" * separator)
 
-    m4 = mul_matrix_vector(w1, m3, t)
-    # m4 = mul_matrix_vector(d, m4, t)
-    print("Resultado: ", m4)
+    # m4 = mul_matrix_vector(w1, m3, t)
+    # # m4 = mul_matrix_vector(d, m4, t)
+    # print("Resultado: ", m4)
 
     # m4 = mul_matrix_vector(w1, [13, 12, -10, -2, 18, -32, -14, 10], t)
     # print("Resultado: ", m4)
@@ -275,6 +416,15 @@ def test_scheme_rotation(input):
     #     print(f"Rotação {i:2d} → d = {rotacao_para_d[i]}")
     # print("-"*separator)
 
+# ---------------------------------------------------------------------------------------------
+def rotate_ciphertext(ct, d, n, q):
+    """
+    Rotaciona um ciphertext no domínio de coeficientes para automorfismo x -> x^d mod (x^n+1).
+    """
+    new_mask = rotate_polynomial_coeffs(ct.mask, d, n, q)
+    new_body = rotate_polynomial_coeffs(ct.body, d, n, q)
+    return Cryptogram(body=new_body, mask=new_mask, batched=ct.batched, q=ct.q)
+
 # -----------------------------------------------------------------------
 # generate de keys of base_decomposition
 def generate_ks_keys(key_old, key_new, base_decomposition, q, p1, p2, batched, params, params_batched):
@@ -298,17 +448,20 @@ def generate_ks_keys(key_old, key_new, base_decomposition, q, p1, p2, batched, p
         print("Error: The keys must have the same size")
         sys.exit(1)
         
-    base_key = decompose_poly_list(key_old, base_decomposition, q)
-    
+    # Corrigir intervalo de coeficientes
+    # key_old = [mod_number(x, q) for x in key_old]
+            
     for i in range(j):
         tmp = []
+        expoente = mod_number(base_decomposition**i,q)
+        # print("Expoente: ",expoente)
         for ct in range(n):
-            t1 = mod_number(key_old[ct] * base_decomposition**i, q)
+            t1 = mod_number(key_old[ct] * expoente, q)
             tmp.append(t1)
         
         # encrypt the old key
         # print(tmp)
-        c0 = encrypt_sk(key_new, tmp, q, p1, p2, batched, params, params_batched)    
+        c0 = encrypt_sk(key_new, tmp, q, p1, p2, True, params, params_batched)    
         keys.append(c0)
     
     return keys
@@ -334,7 +487,26 @@ def key_switching(ksk: list, base_decomposition: int, cryptogram, params):
 
     # 1. Decompor a máscara original 'a' na base B
     # a1 = [a_0, a_1, ..., a_K] onde a = Σ a_j * B^j
-    a1 = decompose_poly_list(original_mask, base_decomposition, q)
+    a1 = decompose_poly_list_rot(original_mask, base_decomposition, q)
+    
+    assert reconstruct_from_decomp_rot(a1, base_decomposition, q) == original_mask
+    
+    # Verificando a decomposicao binária:
+    # posic = 0
+    # decomp = [0] * n
+    # for item in a1.copy():
+    #     tmp = [mod_number(item[ct] * (base_decomposition ** posic), q) for ct in range(n)]
+    #     decomp = [mod_number(decomp[ct] + tmp[ct], q) for ct in range(n)]
+    #     posic += 1
+        
+    # print("decomp.....: ", decomp)
+    # print("Mascara....: ", original_mask)
+    # sys.exit(1)
+    
+    # if decomp != original_mask:
+    #     print("ERRO NA DECOMPOSICAO BINÁRIA =================================")
+    #     sys.exit(1)
+
     
     # print(">>> num_components esperado:", ceil_log(q, base_decomposition))
     # print(">>> len(a1) obtido       :", len(a1))
@@ -360,6 +532,7 @@ def key_switching(ksk: list, base_decomposition: int, cryptogram, params):
 
         # Acumular na soma
         for ct in range(n):
+            # if j > 0:
             new_mask_sum[ct] = mod_number(new_mask_sum[ct] + product[ct], q)
 
     # A nova máscara a' é a negação da soma
@@ -377,6 +550,7 @@ def key_switching(ksk: list, base_decomposition: int, cryptogram, params):
 
         # Acumular na soma
         for ct in range(n):
+            #if j > 0:
             new_body_sum[ct] = mod_number(new_body_sum[ct] + product[ct], q)
 
     # O novo corpo b' é b - (soma)
@@ -399,7 +573,7 @@ def rotate_polynomial_coeffs(coeffs, d, N, q):
         # quantas vezes "ultrapassou" N para determinar o sinal
         k = (i * d) // N
         sign = -1 if (k % 2) else 1
-        # sign = 1
+        #sign = 1
         # aplica mod q (use sua função mod_number ou %q direto)
         rotated[j] = (coeffs[i] * sign) % q
     return rotated
@@ -462,34 +636,6 @@ def primes(limite):
         if eh_primo:
             primos.append(num)
     return primos
-
-# ---------------------------------------------------------------------------------------
-def generate_galois_keys(sk, N, q, p1, p2, batched, params, params_batched):
-    """
-    Gera um dicionário de chaves Galois para todos os d em Z*_{2N}.
-    Cada entrada galois_keys[d] é um ciphertext que, ao ser usado
-    em key‑switching, permite aplicar o automorfismo x->x^d.
-    """
-    # 1) monta o conjunto de automorfismos
-    Z_star = [d for d in range(1, 2*N, 2) if math.gcd(d, 2*N) == 1]
-
-    galois_keys = {}
-    for d in Z_star:
-        # 2) rotaciona a sk “no anel”
-        sk_rot = rotate_polynomial_coeffs(sk, d, N, q)
-        # 3) encripta sk_rot sob sk (aqui sk é a chave que vai
-        #    conseguir desfazer a encriptação, via decrypt)
-        ks = encrypt_sk(
-            sk,           # chave que poderá decriptar
-            sk_rot,       # “mensagem” (o vetor de coefs da sk rotacionada)
-            q, p1, p2,
-            batched,
-            params,
-            params_batched
-        )
-        galois_keys[d] = ks
-
-    return galois_keys
 
 # ---------------------------------------------------------------------------
 def poly_mul(a, b, params, q):
@@ -675,3 +821,231 @@ def ceil_log(q: int, base: int) -> int:
     while base**j < q:
         j += 1
     return j
+
+# -------------------------------------------------------------------------
+def decompose_poly_list_rot(poly, base, q):
+    n = len(poly)
+    max_digits = ceil_log(q, base)
+    decomposition = [[] for _ in range(max_digits)]
+    
+    for coef in poly:
+        tmp = []
+        val = coef
+        for _ in range(max_digits):
+            tmp.append(val % base)
+            val //= base
+        for j in range(max_digits):
+            decomposition[j].append(tmp[j])
+    
+    return decomposition
+
+# ------------------------------------------------------------------------------------
+def reconstruct_from_decomp_rot(a1, base, q):
+    n = len(a1[0])
+    res = [0] * n
+    for j, poly in enumerate(a1):
+        for i in range(n):
+            res[i] = (res[i] + poly[i] * pow(base, j, q)) % q
+    return res
+
+# ------------------------------------------------------------------------------------
+def key_switching_debug(ksk: list, base_decomposition: int, cryptogram, params):
+    q = cryptogram.q
+    n = len(cryptogram.body)
+    a = cryptogram.mask   # = a(x)
+    b = cryptogram.body   # = b(x)
+
+    # 1) decompor a em base B
+    a_decomp = decompose_poly_list_rot(a, base_decomposition, q)
+    print(">>> Decomposição de a em base", base_decomposition, ":", a_decomp)
+
+    psi_rev, psi_inv_rev, n_inv, bar = params
+    num = len(a_decomp)
+
+    new_mask_sum = [0]*n
+    new_body_sum = [0]*n
+
+    # 2) para cada componente
+    for j in range(num):
+        a_j = a_decomp[j]
+        KSa_j = ksk[j].mask
+        KSb_j = ksk[j].body
+
+        # debug
+        print(f"\n-- j = {j}")
+        print(" a_j       =", a_j)
+        print(" KSa_j.mask=", KSa_j)
+        print(" KSa_j.body=", KSb_j)
+
+        # produto máscara
+        prod_mask = polymul_ntt(a_j, KSa_j, q, psi_rev, psi_inv_rev, n_inv, bar)
+        print(" prod_mask =", prod_mask)
+        # produto corpo
+        prod_body = polymul_ntt(a_j, KSb_j, q, psi_rev, psi_inv_rev, n_inv, bar)
+        print(" prod_body =", prod_body)
+
+        # acumula
+        for i in range(n):
+            new_mask_sum[i] = mod_number(new_mask_sum[i] + prod_mask[i], q)
+            new_body_sum[i] = mod_number(new_body_sum[i] + prod_body[i], q)
+
+        print(" new_mask_sum:", new_mask_sum)
+        print(" new_body_sum:", new_body_sum)
+
+    # 3) construir saída
+    new_mask = [mod_number(-x, q) for x in new_mask_sum]
+    new_body = [mod_number(b[i] - new_body_sum[i], q) for i in range(n)]
+
+    print("\n>>> new_mask final:", new_mask)
+    print(">>> new_body final:", new_body)
+
+    return Cryptogram(body=new_body, mask=new_mask, batched=cryptogram.batched, q=q)
+
+# -------------------------------------------------------------------------------------
+# Suas funções mod_number, etc.
+def mod_number(a, q):
+    """Computa (a mod q), garantindo resultado no intervalo [0, q-1]."""
+    return (a % q + q) % q
+# -------------------------------------------------------------------------------------
+def modular_inverse(a, m):
+    """Calcula o inverso modular de a modulo m."""
+    # Implementação usando Extended Euclidean Algorithm
+    # Referência: https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm
+    # g = gcd(a, m)
+    # ax + my = g
+    # Se g == 1, então ax = 1 mod m, e x é o inverso
+    g, x, y = extended_gcd(a, m)
+    if g != 1:
+        # raise ValueError(f"O inverso modular não existe para {a} mod {m}")
+        print(f"O inverso modular não existe para {a} mod {m}")
+        sys.exit(1)
+    return x % m # Retorna o inverso no intervalo [0, m-1]
+# -------------------------------------------------------------------------------------
+def extended_gcd(a, b):
+    """Calcula gcd(a, b) e coeficientes x, y tal que ax + by = gcd(a, b)."""
+    if a == 0:
+        return b, 0, 1
+    else:
+        gcd, x, y = extended_gcd(b % a, a)
+        return gcd, y - (b // a) * x, x
+# -------------------------------------------------------------------------------------
+# Funções de multiplicação fornecidas por você (incluindo uma corrigida para vetor)
+def mul_matrix_vector(matrix, vector, t):
+    n = len(vector)
+    rows = len(matrix)
+    cols = len(matrix[0]) if rows > 0 else 0 # Corrigir aqui para matrizes vazias
+    
+    if cols != n:
+        print(f"Erro: As dimensões da matriz ({rows}x{cols}) e do vetor ({n}) não são compatíveis para M * v.")
+        sys.exit(1)
+    
+    result = []
+    for i in range(rows):
+        tmp = 0
+        for j in range(n):
+            tmp = mod_number(tmp + (matrix[i][j] * vector[j]), t)
+        result.append(tmp)
+        
+    return result
+# -------------------------------------------------------------------------------------
+def multiply_matrices(A, B, t):
+    """Multiplica duas matrizes A e B mod t."""
+    rows_A = len(A)
+    cols_A = len(A[0]) if rows_A > 0 else 0
+    rows_B = len(B)
+    cols_B = len(B[0]) if rows_B > 0 else 0
+    
+    if cols_A != rows_B:
+        raise ValueError(f"Incompatíveis para multiplicação: A é {rows_A}×{cols_A}, B é {rows_B}×{cols_B}")
+    
+    C = [[0] * cols_B for _ in range(rows_A)]
+    
+    for i in range(rows_A):
+        for j in range(cols_B):
+            total = 0
+            for k in range(cols_A):
+                total = mod_number(total + (A[i][k] * B[k][j]), t)
+            C[i][j] = total # Total já está no módulo
+    
+    return C
+# -------------------------------------------------------------------------------------
+def mult_scalar_vector(scalar, vector, t):
+    """Multiplica um escalar por um vetor mod t."""
+    return [mod_number(scalar * elem, t) for elem in vector]
+# -------------------------------------------------------------------------------------
+def encode_input(input, n, t):
+    # Calcular n^-1 mod t
+    n_inv = modular_inverse(n, t)
+
+    # Matriz W_hat da página 148/149
+    W_hat = [
+        [ 1,  1,  1,  1,  1,  1,  1,  1],
+        [12, 14,  5,  3, 10, 11,  7,  6],
+        [ 8,  9,  8,  9, 15,  2, 15,  2],
+        [11,  7,  6, 10, 14,  5,  3, 12],
+        [13, 13, 13, 13,  4,  4,  4,  4],
+        [ 3, 12, 14,  5,  6, 10, 11,  7],
+        [ 2, 15,  2, 15,  9,  8,  9,  8],
+        [ 7,  6, 10, 11,  5,  3, 12, 14]
+    ]
+
+    # Matriz Identidade Reversa I_R para n=8
+    IR = [
+        [0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 0, 0, 0]
+    ]
+
+
+    # Passo 1: Calcular M_prod = W_hat * IR mod t
+    M_prod = multiply_matrices(W_hat, IR, t)
+
+    # Passo 2: Calcular v_temp = M_prod * v mod t
+    v_temp = mul_matrix_vector(M_prod, input, t)
+
+    # Passo 3: Calcular m = n_inv * v_temp mod t
+    m_encoded = mult_scalar_vector(n_inv, v_temp, t)
+
+    return m_encoded
+
+# ----------------------------------------------------------------
+def decode_input(input, t):
+        # Matriz W_hat_star (mod 17)
+    W_hat_star = [
+        [ 1,  3,  9, 10, 13,  5, 15, 11],
+        [ 1,  5,  8,  6, 13, 14,  2, 10],
+        [ 1, 14,  9,  7, 13, 12, 15,  6],
+        [ 1, 12,  8, 11, 13,  3,  2,  7],
+        [ 1,  6,  2, 12,  4,  7,  8, 14],
+        [ 1,  7, 15,  3,  4, 11,  9, 12],
+        [ 1, 11,  2,  5,  4, 10,  8,  3],
+        [ 1, 10, 15, 14,  4,  6,  9,  5]
+    ]
+
+    # Calcular v_j3 = W_hat_star * m_j3_raw mod t_mod
+    v_j3_decoded = mul_matrix_vector(W_hat_star, input, t)
+
+    return v_j3_decoded
+
+# ---------------------------------------------------------------------------------------
+def contains_vector(vectors, target):
+    """
+    Verifica se a lista de vetores `vectors` contém o vetor `target` como elemento.
+
+    Argumentos:
+        vectors (list of list): lista de vetores.
+        target (list): vetor a buscar.
+
+    Retorna:
+        bool: True se `target` está em `vectors`, False caso contrário.
+
+    Exemplo:
+        vectors = [[1,2], [3,4]]
+        contains_vector(vectors, [3,4])  # True
+    """
+    return target in vectors

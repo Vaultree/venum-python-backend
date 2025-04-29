@@ -350,10 +350,10 @@ def encrypt_sk(sk: List[int], msg: List[int], q: int, p1: int, p2: int, batched:
     # verify the cryptography mode batched or not
     if batched:
         msg = msg.copy()
-        psi_rev, psi_inv_rev, n_inv, bar = params_batched
-        #print("message: ", msg)
-        intt_generic(msg, psi_inv_rev, n_inv, p1, bar)  
-        #print("Batched message: ", msg)
+        # psi_rev, psi_inv_rev, n_inv, bar = params_batched
+        # #print("message: ", msg)
+        # intt_generic(msg, psi_inv_rev, n_inv, p1, bar)  
+        # #print("Batched message: ", msg)
         
         # msg = msg.copy()
         # m0_rev = bit_reverse_order(msg, n)
@@ -421,11 +421,12 @@ def decrypt(sk: list[int], crypto: Cryptogram, p1: int, params: tuple[list[int],
         ret.append(tmp % p1) # here decrypt the message CRT
         
     if crypto.batched:
-        #print("Batched message antes - decifragem: ", ret)
-        psi_rev, psi_inv_rev, n_inv, bar = params_batched
-        ntt_generic(ret, psi_rev, p1, bar) 
-        #print("Batched message depois - decifragem: ", ret)
-        return ret
+        # #print("Batched message antes - decifragem: ", ret)
+        # psi_rev, psi_inv_rev, n_inv, bar = params_batched
+        # ntt_generic(ret, psi_rev, p1, bar) 
+        # #print("Batched message depois - decifragem: ", ret)
+        # return ret
+        ret = ret.copy()
 
         # poly_decrypted = ret.copy() # Fazer cópia se 'ret' for usado depois
         # psi_rev, psi_inv_rev, n_inv, bar = params_batched
@@ -815,3 +816,23 @@ def batch_decode(coefs: list[int],
     ntt_generic(v, psi_rev, p1, bar)
     # 2) volta para ordem natural
     return bit_reverse_order(v, n)
+
+# --------------------------------------------------------------------------
+def rotate_vector(v, rot):
+    """
+    Rotaciona a lista `v` em `rot` posições para a esquerda.
+    Aceita rotações maiores que o tamanho e rotações negativas.
+
+    Argumentos:
+        v (list): lista de elementos.
+        rot (int): número de posições a rotacionar.
+
+    Retorna:
+        list: nova lista rotacionada.
+    """
+    n = len(v)
+    if n == 0:
+        return v
+    # Ajusta rotações maiores que n e rotações negativas
+    k = rot % n
+    return v[k:] + v[:k]

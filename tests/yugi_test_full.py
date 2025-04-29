@@ -49,7 +49,7 @@ def test_scheme_full(input):
             params_batched = (psi_rev, psi_inv_rev, n_inv, bar)
             
             # Generate the keys
-            sk = create_sk(n, 0, 1, q)
+            sk = create_sk(n, -1, 1, q)
             pk = generate_pk(sk, q, p1, p2, params)
             
             # Generate the plaintexts
@@ -122,7 +122,8 @@ def test_scheme_full(input):
             params_batched = (psi_rev, psi_inv_rev, n_inv, bar)
             
             # Generate the keys
-            sk = create_sk(n, 0, 1, q)
+            # sk = create_sk(n, 0, 1, q)
+            sk = create_sk(n, -1, 1, q)
             pk = generate_pk(sk, q, p1, p2, params)
             
             # Generate the plaintexts
@@ -199,7 +200,8 @@ def test_scheme_full(input):
             params_batched = (psi_rev, psi_inv_rev, n_inv, bar)
             
             # Generate the keys
-            sk = create_sk(n, 0, 1, q)
+            # sk = create_sk(n, 0, 1, q)
+            sk = create_sk(n, -1, 1, q)
             pk = generate_pk(sk, q, p1, p2, params)
             rlk = generate_rlk(sk, base_decomposition, p1, p2, q, params)
             
