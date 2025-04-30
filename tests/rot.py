@@ -15,7 +15,7 @@ def test_scheme_rotation(input):
     show_title("TEST SCHEME - ROTATION")
 
     # parameters:
-    n = 8
+    n = 64
     # q = 776077649
     p1 = 17
     p2 = 3
@@ -69,8 +69,23 @@ def test_scheme_rotation(input):
     for ct in range(n):
         m0.append((ct+1)* 1)
         
-    r1 = encode_input(m0, n, p1)
-    r2 = decode_input(r1, n, p1)
+    # r = reverse_identity(n)
+    # for ct in r:
+    #     print(ct)
+    
+    # sys.exit(0)    
+        
+    w = 3
+    while True:    
+        r1 = encode_input(m0, n, p1, w)
+        r2 = decode_input(r1, n, p1, w)
+        print("W = ",w)
+        if m0 == r2:
+            break
+        else:
+            w = w + 1
+    
+    print("W = ", w)
     assert m0 == r2
             
     # m0 = [4, 1, 2, 3, 8, 5, 6, 7]
@@ -87,11 +102,11 @@ def test_scheme_rotation(input):
     #print("Parameters batched: ", params_batched)
     
     # Encrypt the plaintexts secret key
-    c0 = encrypt_sk(sk, encode_input(m0,n,p1), q, p1, p2, batched, params, params_batched)
+    c0 = encrypt_sk(sk, encode_input(m0,n,p1,w), q, p1, p2, batched, params, params_batched)
     print("C0: ", c0)
     
     decrypted = decrypt(sk, c0, p1, params, params_batched)
-    decrypted = decode_input(decrypted, n, p1)            
+    decrypted = decode_input(decrypted, n, p1,w)            
     print("Decrypted (c0): ", decrypted)
     print("-" * 80)
     
@@ -108,6 +123,7 @@ def test_scheme_rotation(input):
     # 1) monta o conjunto de automorfismos    
     Z_star = [d for d in range(1, 2*n, 2) if math.gcd(d, 2*n) == 1]
     print("Automorfismos válidos (Z*_{}) = {}".format(2*n, Z_star))
+    # sys.exit(0)
 
     root_list = Z_star
     root_list = [5]
@@ -187,7 +203,7 @@ def test_scheme_rotation(input):
                 # decrypted new Cryptogram with the new secret key (rotated)
                 
                 decrypted = decrypt(sk_rot, c1, p1, params, params_batched)
-                decrypted = decode_input(decrypted, n, p1)
+                decrypted = decode_input(decrypted, n, p1, w)
                 print("Decrypted (c1).: ", decrypted)
                 # print("-" * separator)
                 
@@ -970,7 +986,7 @@ def mult_scalar_vector(scalar, vector, t):
     """Multiplica um escalar por um vetor mod t."""
     return [mod_number(scalar * elem, t) for elem in vector]
 # -------------------------------------------------------------------------------------
-def encode_input(input, n, t):
+def encode_input(input, n, t, w):
     # Calcular n^-1 mod t
     n_inv = modular_inverse(n, t)
 
@@ -987,7 +1003,8 @@ def encode_input(input, n, t):
     # ]
     
     d = find_primitive_root(t, n)
-    W_hat = generate_w_generalized(d, 5, n, t)
+    # print("raiz primitiva = ", d)
+    W_hat = generate_w_generalized(d, w, n, t)
     # W_hat = generate_w(d, 5, n, t)
 
     # Matriz Identidade Reversa I_R para n=8
@@ -1015,7 +1032,7 @@ def encode_input(input, n, t):
     return m_encoded
 
 # ----------------------------------------------------------------
-def decode_input(input, n, t):
+def decode_input(input, n, t, w):
         # Matriz W_hat_star (mod 17)
     # W_hat_star = [ 
     #     [ 1,  3,  9, 10, 13,  5, 15, 11],
@@ -1029,7 +1046,8 @@ def decode_input(input, n, t):
     # ]
     
     d = find_primitive_root(t, n)
-    W_hat_star = generate_w_star_generalized(d, 5, n, t)
+    # print("raiz primitiva = ", d)
+    W_hat_star = generate_w_star_generalized(d, w, n, t)
     # W_hat_star = generate_w1(d, 5, n, t)
 
     # Calcular v_j3 = W_hat_star * m_j3_raw mod t_mod
@@ -1107,7 +1125,7 @@ def generate_w_generalized(root, j_base, n, t):
 
     # Exponents sequence logic derived from user's generate_w hardcoding for n=8
     # This pattern looks like j_base**(n/2-1 - k) for k in range(n/2)
-    j_powers_exp = [j_base**(n/2 - 1 - k) for k in range(n//2)]
+    j_powers_exp = [mod_number(j_base**(n/2 - 1 - k),two_n) for k in range(n//2)]
     
     # Combine positive and negative exponents modulo 2n
     column_base_exp = []
@@ -1165,8 +1183,8 @@ def generate_w_star_generalized(root, j_base, n, t):
     # Row index i (0 <= i < n/2): h_index = i
     # Row index i (n/2 <= i < n): h_index = i - n/2
     # J/J* powers derived from h_index
-    row_exp_bases_j = [j_base**i for i in range(n//2)]
-    row_exp_bases_j_star = [-(j_base**i) for i in range(n//2)]
+    row_exp_bases_j = [mod_number(j_base**i,two_n) for i in range(n//2)]
+    row_exp_bases_j_star = [mod_number(-(j_base**i),two_n) for i in range(n//2)]
 
     for i in range(n):
         for j in range(n):
