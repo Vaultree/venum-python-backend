@@ -36,6 +36,12 @@ def test_scheme_rotation(input):
     print("P1 = ", p1)
     print("N = ", n)
 
+    # # para calcular a raiz W da matriz de rotação
+    # large_roots = get_rlwe_rotation_base_roots(p1, n)
+    # print(f"Calculated base roots for Rotation Matrix W (corresponding to powers of omega^{{E(i)}} mod Q). First 8 values for N={n}:")
+    # print(large_roots[:8])
+    # sys.exit(0)
+
     # verify if p1 is equal to 1 mod 2n (necessary condition for CRT)
     if p1 % (2*n) != 1:
         print("Error: p1 must be equal to 1 mod 2n | n = ",n, "p1 mod 2n", p1 % (2*n))
@@ -334,6 +340,7 @@ def test_scheme_rotation(input):
         posic +=1
     
     print("Map size: ", total)
+    print("W = ", w)
     print("P1 = ", p1, " | P2 = ", p2, " | Q = ", q)
                 
     # # Show the results
@@ -1003,6 +1010,11 @@ def encode_input(input, n, t, w):
     # ]
     
     d = find_primitive_root(t, n)
+    
+    # large_roots = get_rlwe_rotation_base_roots(t, n)
+    # d = large_roots[0]
+    # d = get_primitive_root_of_unity(t, n)
+    
     # print("raiz primitiva = ", d)
     W_hat = generate_w_generalized(d, w, n, t)
     # W_hat = generate_w(d, 5, n, t)
@@ -1046,7 +1058,12 @@ def decode_input(input, n, t, w):
     # ]
     
     d = find_primitive_root(t, n)
-    # print("raiz primitiva = ", d)
+    
+    # large_roots = get_rlwe_rotation_base_roots(t, n)
+    # d = large_roots[0]
+    # d = get_primitive_root_of_unity(t, n)
+
+    print("raiz primitiva = ", d)
     W_hat_star = generate_w_star_generalized(d, w, n, t)
     # W_hat_star = generate_w1(d, 5, n, t)
 
@@ -1210,3 +1227,179 @@ def generate_w_star_generalized(root, j_base, n, t):
 
 
     return w_star_mat
+
+# ------------------------------------------------------------------------------------------
+def is_power_of_two(n):
+    """Checks if n is a positive power of 2."""
+    return n > 0 and (n & (n - 1) == 0)
+# ------------------------------------------------------------------------------------------
+def prime_factors(m):
+    """Helper function to find prime factors of m."""
+    # Assumes m is an integer > 1
+    factors = set() # Use set to get unique factors
+    d = 2
+    temp = m
+    while d * d <= temp:
+        if temp % d == 0:
+            factors.add(d)
+            while temp % d == 0:
+                temp //= d
+        d += 1
+    if temp > 1:
+        factors.add(temp)
+    return list(factors) # Return as list
+
+# ------------------------------------------------------------------------------------------
+def find_primitive_root_of_q(q: int) -> int:
+    """
+    Finds a primitive root (generator) of Z_q* for prime q.
+
+    Args:
+        q: The modulus (must be prime).
+
+    Returns:
+        A primitive root modulo q.
+
+    Raises:
+        ValueError: If q is not suitable or a primitive root cannot be found.
+    """
+    if q <= 1:
+         raise ValueError(f"Modulus q must be > 1, but got {q}")
+    # Check if q is prime (optional but good practice for this function's contract)
+    # In crypto contexts, q is typically guaranteed to be prime.
+    # A simple check for small q:
+    if q == 2: return 1 # 1 is the primitive root mod 2
+    if q == 3: return 2 # 2 is the primitive root mod 3
+
+    q_minus1 = q - 1
+    # Find prime factors of q-1 to check for primitive root
+    factors_q_minus_1 = prime_factors(q_minus1)
+
+    # Test small candidates for a primitive root
+    # Search limit can be increased if necessary
+    search_limit = min(q - 1, 10000)
+
+    for g_candidate in range(2, search_limit + 1):
+        is_primitive = True
+        # Check if g_candidate^((q-1)/p) == 1 (mod q) for any prime factor p of (q-1)
+        # If this is true for any p, the order divides (q-1)/p < q-1, so it's not primitive
+        for factor in factors_q_minus_1:
+            if pow(g_candidate, q_minus1 // factor, q) == 1:
+                is_primitive = False
+                break # g_candidate is not a primitive root of q
+
+        if is_primitive:
+            # Found a primitive root of q
+            return g_candidate
+
+    raise ValueError(f"Could not find a primitive root modulo {q} within the search range [2, {search_limit}].")
+
+# ------------------------------------------------------------------------------------------
+def get_primitive_root_of_unity(q: int, order: int) -> int:
+    """
+    Finds a primitive order-th root of unity modulo q.
+    q must be prime and order must divide q-1.
+
+    Args:
+        q: The modulus (must be prime).
+        order: The desired order of the root (e.g., 2*n for NTT size 2n).
+
+    Returns:
+        A primitive order-th root of unity modulo q.
+
+    Raises:
+        ValueError: If preconditions are not met or root not found.
+    """
+    if q <= 1:
+         raise ValueError(f"Modulus q must be > 1, but got {q}")
+    if order <= 0:
+         raise ValueError(f"Order must be positive, but got {order}")
+
+    q_minus1 = q - 1
+
+    # Check if a root of unity of the desired order exists
+    if q_minus1 % order != 0:
+        raise ValueError(
+            f"For a root of order {order} modulo {q}, {order} must divide (q-1). "
+            f"q-1 = {q_minus1}, order = {order}. (q-1) % order != 0. "
+            f"No primitive {order}-th root of unity exists modulo {q}."
+        )
+
+    # Find a primitive root g modulo q (a generator of Z_q*)
+    g = find_primitive_root_of_q(q) # This might raise ValueError
+
+    # Calculate the primitive order-th root of unity: omega = g^((q-1)/order) mod q
+    exponent_for_unity_root = q_minus1 // order
+    omega = pow(g, exponent_for_unity_root, q)
+
+    # Sanity check: Verify the calculated root has the exact desired order
+    # It must be 1 when raised to the power 'order'
+    if pow(omega, order, q) != 1:
+         raise ValueError(f"Internal Error: Calculated potential root {omega} does not satisfy w^order = 1 mod q.")
+
+    # It must NOT be 1 when raised to any proper divisor of 'order'
+    # Find factors of 'order' for this check
+    factors_of_order = prime_factors(order)
+    for factor in factors_of_order:
+        if pow(omega, order // factor, q) == 1:
+             raise ValueError(f"Internal Error: Calculated root {omega} has order less than {order} modulo {q}.")
+
+    return omega
+
+# ------------------------------------------------------------------------------------------
+def get_rlwe_rotation_base_roots(q: int, n: int) -> list[int]:
+    """
+    Calculates the sequence of base roots used for constructing the NTT/RLWE
+    rotation matrix (often denoted W or Psi), based on the pattern observed
+    in the provided image example (matrix structure for X^n + 1).
+
+    These roots are powers of a primitive (2n)-th root of unity modulo q.
+
+    Prerequisites:
+    - q must be a prime modulus.
+    - n must be a positive integer and a power of 2 (n >= 2).
+    - (2*n) must divide (q - 1).
+
+    Args:
+        q: The prime modulus.
+        n: Half the size of the NTT (NTT size is 2*n). Must be a power of 2 (>= 2).
+
+    Returns:
+        A list of n integers, which are the base roots
+        [omega^E(0), omega^E(1), ..., omega^E(n-1)] modulo q,
+        where omega is a primitive (2n)-th root of unity (zeta), and E(i)
+        is the specific exponent permutation pattern.
+        These correspond to the values in the first row (index j=1)
+        of the rotation matrix W shown in the example (assuming omega = zeta^1).
+
+    Raises:
+        ValueError: If prerequisites are not met or required roots cannot be found.
+    """
+    # Validate n
+    if not is_power_of_two(n) or n < 2:
+         raise ValueError(f"n must be a positive power of 2 >= 2, but got {n}")
+
+    order_of_unity = 2 * n
+
+    # Find a primitive (2n)-th root of unity modulo q.
+    # This serves as our base 'omega'.
+    omega = get_primitive_root_of_unity(q, order_of_unity) # This might raise ValueError
+
+    rotation_base_roots = []
+    n_half = n // 2
+
+    # Generate the exponents sequence E(i) and calculate omega^E(i) mod q
+    for i in range(n):
+        exponent = 0
+        if i < n_half:
+            # E(i) = 1 + 4 * (n/2 - 1 - i)
+            exponent = 1 + 4 * (n_half - 1 - i)
+        else:
+            # E(i) = 3 + 4 * (i - n/2)
+            exponent = 3 + 4 * (i - n_half)
+
+        # Calculate the i-th base root for the matrix
+        base_root_i = pow(omega, exponent, q)
+        rotation_base_roots.append(base_root_i)
+
+    return rotation_base_roots
