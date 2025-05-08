@@ -176,6 +176,7 @@ def generate_noise_crt(n: int, p1: int, p2: int) -> list[int]:
     # noise_vector = [0] * n
     
     noise_vector = generate_random_vector(n, 0, p2-1)
+    # print("noise_vector: ", noise_vector)
     crt_noise = []
     for ct in range(n):
         tmp = encode_crt([0, noise_vector[ct]], [p1, p2])
@@ -483,49 +484,7 @@ def encrypt_pk(pk: PublicKey, msg: List[int], q: int, p1: int, p2: int, batched:
     
     return crypto
 
-# # # ----------------------------------------------------------------------------------
-# def encrypt_sk(sk, msg, q, p1, p2,
-#                batched, params, params_batched) -> Cryptogram:
-#     n = len(sk)
-
-#     # 1) plain_coeffs em Z_p1
-#     if batched:
-#         plain_p1 = batch_encode(msg, params_batched, p1)
-#         plain_p1 = encode_msg_crt(plain_p1, n, p1, p2)
-#     else:
-#         # sua rotina CRT normal, retorna coefs em Z_p1
-#         plain_p1 = encode_msg_crt(msg, n, p1, p2)
-
-#     # 2) embed em Z_q via CRT
-#     # lmessage = encode_msg_crt(plain_p1, n, p1, p2)
-#     lmessage = plain_p1
-
-#     # 3) gera mask/noise e monta ciphertext
-#     mask = generate_mask_vector(n, q)
-#     mask_key = polymul_ntt(mask, sk, q, *params)
-#     body = [(mask_key[i] + lmessage[i]) % q for i in range(n)]
-#     neg_mask = [(-mask[i]) % q for i in range(n)]
-#     return Cryptogram(body=body, mask=neg_mask,
-#                       batched=batched, q=q)
-# # # ----------------------------------------------------------------------------------
-# def decrypt(sk, crypto, p1, params, params_batched) -> list[int]:
-#     n = len(sk)
-#     # 1) recover plain coefs em Z_p1
-#     mask_key = polymul_ntt(crypto.mask, sk, crypto.q, *params)
-#     result = [(crypto.body[i] + mask_key[i]) % crypto.q
-#               for i in range(n)]
-#     # CRT‑decode p1
-#     plain_p1 = [(x if x < crypto.q//2 else x - crypto.q) % p1
-#                 for x in result]
-
-#     # 2) un‑batch ou CRT final
-#     if crypto.batched:
-#         return batch_decode(plain_p1, params_batched, p1)
-#     else:
-#         # decodificação normal CRT
-#         return [v % p1 for v in plain_p1]
-# # # ----------------------------------------------------------------------------------
-
+# -----------------------------------------------------------------------------
 # sum of cryptograms
 def sum_cryptograms(c1: Cryptogram, c2: Cryptogram):
     
