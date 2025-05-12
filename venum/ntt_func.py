@@ -462,7 +462,7 @@ def encrypt_pk(pk: PublicKey, msg: List[int], q: int, p1: int, p2: int, batched:
     
     # generate noise for mask
     noise_mask = generate_noise_crt(n, p1, p2)
-    noise_mask = [mod_number(0, q) for i in range(n)]
+    # noise_mask = [mod_number(0, q) for i in range(n)]
     
     # generate noise for body
     noise_body = generate_noise_crt(n, p1, p2)
